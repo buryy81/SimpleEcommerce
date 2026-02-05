@@ -1,0 +1,102 @@
+﻿@model SimpleEcommerce.Models.User
+
+@{
+    ViewData["Title"] = "Личный кабинет";
+}
+
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Профиль</h4>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center"
+                             style="width: 100px; height: 100px;">
+                            <span class="text-white fs-1">@Model.FirstName[0]</span>
+                        </div>
+                    </div>
+
+                    <h3>@Model.FullName</h3>
+                    <p class="text-muted">@Model.Email</p>
+
+                    <div class="mt-4 text-start">
+                        <p><strong>Дата рождения:</strong> @Model.BirthDate.ToString("dd.MM.yyyy")</p>
+                        <p><strong>Возраст:</strong> @((DateTime.Now.Year - Model.BirthDate.Year)) лет</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="@Url.Action("Logout")" class="btn btn-outline-danger w-100">
+                            Выйти
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning">
+                    <h4 class="mb-0">Баланс счета</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h1 class="text-success">@Model.Balance.ToString("N0") ₽</h1>
+                            <p class="text-muted">Доступно для покупок</p>
+                        </div>
+                        <div class="btn-group">
+                            <a href="@Url.Action("AddFunds", new { amount = 500 })"
+                               class="btn btn-outline-success">+500 ₽</a>
+                            <a href="@Url.Action("AddFunds", new { amount = 1000 })"
+                               class="btn btn-outline-success">+1000 ₽</a>
+                            <a href="@Url.Action("AddFunds", new { amount = 5000 })"
+                               class="btn btn-outline-success">+5000 ₽</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">История операций</h4>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <div class="list-group-item d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Пополнение баланса</h6>
+                                <small class="text-muted">Сегодня, 10:30</small>
+                            </div>
+                            <span class="text-success">+1 000 ₽</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Покупка: Наушники Sony</h6>
+                                <small class="text-muted">Вчера, 15:45</small>
+                            </div>
+                            <span class="text-danger">-5 000 ₽</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Регистрационный бонус</h6>
+                                <small class="text-muted">01.01.2024</small>
+                            </div>
+                            <span class="text-success">+10 000 ₽</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
