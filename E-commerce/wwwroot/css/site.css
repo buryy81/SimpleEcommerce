@@ -19,4 +19,264 @@ html {
 
 body {
   margin-bottom: 60px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #333;
+  background-color: #f8f9fa;
+}
+
+/* Header Styles */
+.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.top-header {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%) !important;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.navbar-nav .nav-link {
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  transition: color 0.2s;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #0056b3 !important;
+}
+
+.balance-display {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%) !important;
+  border: 1px solid #81c784;
+}
+
+/* Product Cards */
+.product-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.product-image-wrapper {
+  background-color: #f8f9fa;
+}
+
+.product-image {
+  transition: transform 0.3s;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+/* Category Cards */
+.category-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.category-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  border-radius: 0 0 20px 20px;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  border: none;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 86, 179, 0.3);
+  background: linear-gradient(135deg, #004085 0%, #003366 100%);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  border: none;
+  font-weight: 600;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* Product Details */
+.product-image-container {
+  background: #fff;
+}
+
+.price-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  border: 1px solid #dee2e6;
+}
+
+/* Forms */
+.form-control:focus {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+}
+
+/* Footer */
+.footer {
+  background: #212529 !important;
+  margin-top: auto;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  background-color: transparent;
+  padding: 0;
+}
+
+.breadcrumb-item a {
+  color: #0056b3;
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  text-decoration: underline;
+}
+
+/* Rating */
+.rating .bi-star-fill,
+.rating .bi-star-half {
+  font-size: 1.2rem;
+}
+
+/* Badge */
+.badge {
+  font-weight: 500;
+  padding: 0.4em 0.6em;
+}
+
+/* Table */
+.table {
+  background-color: white;
+}
+
+.table td {
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+/* Features Section */
+.features-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+}
+
+/* Modal Styles */
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 1px solid #e9ecef;
+  padding: 1.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+}
+
+/* QR Code Container */
+.bg-light.p-3.rounded {
+  border: 2px dashed #dee2e6;
+}
+
+/* Favorite Button Active State */
+.favorite-btn.active {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+  color: white !important;
+}
+
+.favorite-btn.active i {
+  color: white !important;
+}
+
+/* Waiting Alert */
+#waitingAlert {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+/* Profile Page Improvements */
+.list-group-item {
+  border-left: none;
+  border-right: none;
+  padding: 1rem 1.5rem;
+}
+
+.list-group-item:first-child {
+  border-top: none;
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 2rem 0 !important;
+  }
+  
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+  
+  .balance-display {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem !important;
+  }
+  
+  .modal-dialog {
+    margin: 1rem;
+  }
+  
+  #waitingAlert {
+    max-width: 90% !important;
+    margin-left: 0 !important;
+    left: 50% !important;
+  }
 }

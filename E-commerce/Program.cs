@@ -1,12 +1,20 @@
+using Microsoft.EntityFrameworkCore;
+using SimpleEcommerce.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDistributedMemoryCache(); // Для хранения сессий в памяти
+// РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє PostgreSQL
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+	options.UseNpgsql(connectionString));
+
+builder.Services.AddDistributedMemoryCache(); // Р”Р»СЏ С…СЂР°РЅРµРЅРёСЏ СЃРµСЃСЃРёР№ РІ РїР°РјСЏС‚Рё
 builder.Services.AddSession(options =>
 {
-	options.IdleTimeout = TimeSpan.FromMinutes(30); // Время жизни сессии
+	options.IdleTimeout = TimeSpan.FromMinutes(30); // Р’СЂРµРјСЏ Р¶РёР·РЅРё СЃРµСЃСЃРёРё
 	options.Cookie.HttpOnly = true;
 	options.Cookie.IsEssential = true;
 });

@@ -1,36 +1,446 @@
 ﻿@model SimpleEcommerce.Models.Product
 
 @{
-    ViewData["Title"] = Model.Name;
+    ViewData["Title"] = Model.Name + " - Magaz";
 }
 
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-6">
-            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name">
-        </div>
-        <div class="col-md-6">
-            <h1>@Model.Name</h1>
-            <p class="lead">@Model.Description</p>
-            <div class="mb-3">
-                <h2 class="text-primary">@Model.Price.ToString("N0") ₽</h2>
-            </div>
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Главная</a></li>
+            <li class="breadcrumb-item"><a href="/Product">Каталог</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
 
-            <div class="mb-4">
-                <div class="input-group" style="max-width: 200px;">
-                    <button class="btn btn-outline-secondary" type="button">-</button>
-                    <input type="number" class="form-control text-center" value="1" min="1">
-                    <button class="btn btn-outline-secondary" type="button">+</button>
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="product-image-container bg-white border rounded p-3 shadow-sm">
+                <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name" style="max-height: 500px; width: 100%; object-fit: contain;">
+            </div>
+            <div class="row g-2 mt-2">
+                <div class="col-3">
+                    <img src="@Model.ImageUrl" class="img-fluid rounded border" alt="Thumbnail" style="height: 80px; object-fit: cover; cursor: pointer;">
+                </div>
+                <div class="col-3">
+                    <img src="@Model.ImageUrl" class="img-fluid rounded border" alt="Thumbnail" style="height: 80px; object-fit: cover; cursor: pointer;">
+                </div>
+                <div class="col-3">
+                    <img src="@Model.ImageUrl" class="img-fluid rounded border" alt="Thumbnail" style="height: 80px; object-fit: cover; cursor: pointer;">
+                </div>
+                <div class="col-3">
+                    <img src="@Model.ImageUrl" class="img-fluid rounded border" alt="Thumbnail" style="height: 80px; object-fit: cover; cursor: pointer;">
                 </div>
             </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="product-info">
+                <h1 class="fw-bold mb-3">@Model.Name</h1>
+                
+                <div class="rating mb-3">
+                    <span class="text-warning">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-half"></i>
+                    </span>
+                    <span class="text-muted ms-2">4.5 (127 отзывов)</span>
+                </div>
 
-            <button class="btn btn-success btn-lg w-100 mb-2">
-                <i class="bi bi-cart-plus"></i> Купить товар
-            </button>
+                <div class="price-section bg-light rounded p-4 mb-4">
+                    <div class="d-flex align-items-baseline mb-2">
+                        <span class="h2 fw-bold text-primary mb-0">@Model.Price.ToString("N0")</span>
+                        <span class="text-muted ms-2 fs-5">₽</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-success me-2">
+                            <i class="bi bi-check-circle-fill"></i> В наличии
+                        </span>
+                        <span class="text-success small">
+                            <i class="bi bi-truck"></i> Доставка завтра
+                        </span>
+                    </div>
+                </div>
 
-            <a href="@Url.Action("Index")" class="btn btn-outline-secondary w-100">
-                ← Вернуться в каталог
-            </a>
+                <div class="description-section mb-4">
+                    <h5 class="fw-semibold mb-3">Описание</h5>
+                    <p class="text-muted">@(Model.Description ?? "Подробное описание товара будет здесь.")</p>
+                </div>
+
+                <div class="action-buttons">
+                    @{
+                        bool hasEnoughBalance = ViewBag.HasEnoughBalance ?? false;
+                        decimal userBalance = ViewBag.UserBalance ?? 0;
+                        bool isLoggedIn = userBalance > 0 || ViewBag.UserBalance != null;
+                    }
+                    
+                    @if (isLoggedIn)
+                    {
+                        @if (hasEnoughBalance)
+                        {
+                            <button class="btn btn-primary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" id="buyBtn" data-product-id="@Model.Id" data-product-price="@Model.Price" data-product-name="@Model.Name">
+                                <i class="bi bi-cart-plus me-2"></i>Купить
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" disabled>
+                                <i class="bi bi-cart-x me-2"></i>Недостаточно средств
+                            </button>
+                            <button class="btn btn-success btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                                <i class="bi bi-wallet2 me-2"></i>Пополнить баланс
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Login", "Account")" class="btn btn-primary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Войти для покупки
+                        </a>
+                    }
+                    
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary w-100" id="favoriteBtn">
+                                <i class="bi bi-heart me-2"></i>В избранное
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-secondary w-100" id="copyLinkBtn" title="Скопировать ссылку">
+                                <i class="bi bi-link-45deg me-2"></i>Ссылка
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-top">
+                    <a href="@Url.Action("Index")" class="text-decoration-none">
+                        <i class="bi bi-arrow-left me-2"></i>Вернуться в каталог
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-semibold">Характеристики товара</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted" style="width: 200px;">Бренд</td>
+                                <td class="fw-semibold">Magaz</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Артикул</td>
+                                <td class="fw-semibold">@Model.Id.ToString("000000")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Гарантия</td>
+                                <td class="fw-semibold">12 месяцев</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Страна производства</td>
+                                <td class="fw-semibold">Россия</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Модальное окно подтверждения покупки -->
+<div class="modal fade" id="confirmPurchaseModal" tabindex="-1" aria-labelledby="confirmPurchaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmPurchaseModalLabel">Подтверждение покупки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="purchaseForm" method="post" action="@Url.Action("Purchase", "Product")">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="productId" id="hiddenProductId" value="@Model.Id">
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-cart-check text-primary" style="font-size: 48px;"></i>
+                        <h4 class="mt-3 mb-3">Вы уверены, что хотите купить этот товар?</h4>
+                    </div>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Товар:</span>
+                                <span class="fw-semibold" id="confirmProductName">@Model.Name</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Цена:</span>
+                                <span class="fw-bold text-primary" id="confirmProductPrice">@Model.Price.ToString("N0") ₽</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Ваш баланс:</span>
+                                <span class="fw-semibold" id="confirmUserBalance">@(ViewBag.UserBalance?.ToString("N0") ?? "0") ₽</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-semibold">Остаток после покупки:</span>
+                                <span class="fw-bold text-success" id="confirmRemainingBalance">@((ViewBag.UserBalance - Model.Price).ToString("N0")) ₽</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="confirmPurchaseBtn">
+                        <i class="bi bi-check-circle me-2"></i>Подтвердить покупку
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно пополнения счета -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Пополнение счета</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addFundsForm" method="post" action="@Url.Action("AddFunds", "Account")">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Сумма пополнения:</label>
+                        <input type="number" class="form-control form-control-lg" name="amount" id="amountInput" min="100" step="100" value="1000" required>
+                        <small class="text-muted">Минимальная сумма: 100 ₽</small>
+                    </div>
+                
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="bi bi-credit-card me-2"></i>Реквизиты для перевода</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Номер карты</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control fw-bold" value="5536 9138 1234 5678" id="cardNumber" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" id="copyCardBtn">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label text-muted small">Получатель</label>
+                                <p class="mb-0 fw-semibold">ИП Иванов Иван Иванович</p>
+                            </div>
+                            <div>
+                                <label class="form-label text-muted small">Назначение платежа</label>
+                                <p class="mb-0 text-muted small">Пополнение баланса Magaz</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <p class="mb-2 fw-semibold">Или отсканируйте QR-код</p>
+                        <div class="bg-light p-3 rounded d-inline-block">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=1000" alt="QR Code" class="img-fluid" style="max-width: 200px;" id="qrCode">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        После перевода нажмите кнопку "Перевел" для подтверждения платежа
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmPaymentBtn">
+                    <i class="bi bi-check-circle me-2"></i>Перевел
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно успешной покупки -->
+<div class="modal fade" id="successPurchaseModal" tabindex="-1" aria-labelledby="successPurchaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 64px;"></i>
+                <h3 class="mt-3 mb-3">Товар успешно куплен!</h3>
+                <p class="text-muted mb-4" id="successMessage"></p>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="location.reload()">
+                    <i class="bi bi-check me-2"></i>ОК
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Плашка ожидания средств -->
+<div class="alert alert-warning alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" role="alert" id="waitingAlert" style="display: none; z-index: 9999; max-width: 500px;">
+    <i class="bi bi-hourglass-split me-2"></i>
+    <strong>Ожидайте получения средств</strong><br>
+    Ваш платеж обрабатывается. Средства поступят на счет в течение нескольких минут.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+@section Scripts {
+    <script>
+        // Кнопка избранное
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        favoriteBtn.addEventListener('click', function() {
+            if (this.classList.contains('active')) {
+                this.classList.remove('active', 'btn-primary');
+                this.classList.add('btn-outline-primary');
+                this.querySelector('i').classList.remove('bi-heart-fill');
+                this.querySelector('i').classList.add('bi-heart');
+            } else {
+                this.classList.add('active', 'btn-primary');
+                this.classList.remove('btn-outline-primary');
+                this.querySelector('i').classList.remove('bi-heart');
+                this.querySelector('i').classList.add('bi-heart-fill');
+            }
+        });
+
+        // Копирование ссылки
+        document.getElementById('copyLinkBtn').addEventListener('click', function() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(function() {
+                const btn = document.getElementById('copyLinkBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check me-2"></i>Скопировано';
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-success');
+                setTimeout(function() {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-secondary');
+                }, 2000);
+            });
+        });
+
+        // Копирование номера карты
+        document.getElementById('copyCardBtn').addEventListener('click', function() {
+            const cardNumber = document.getElementById('cardNumber').value;
+            navigator.clipboard.writeText(cardNumber.replace(/\s/g, '')).then(function() {
+                const btn = document.getElementById('copyCardBtn');
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check"></i>';
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-success');
+                setTimeout(function() {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-secondary');
+                }, 2000);
+            });
+        });
+
+        // Подтверждение платежа (пополнение баланса)
+        document.getElementById('confirmPaymentBtn').addEventListener('click', function() {
+            const form = document.getElementById('addFundsForm');
+            
+            // Отправляем форму
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(new FormData(form))
+            })
+            .then(response => {
+                if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+                    modal.hide();
+                    
+                    // Показываем плашку ожидания
+                    const alert = document.getElementById('waitingAlert');
+                    alert.style.display = 'block';
+                    
+                    // Автоматически скрываем через 10 секунд и перезагружаем страницу
+                    setTimeout(function() {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                        location.reload();
+                    }, 10000);
+                }
+            });
+        });
+
+        // Обновление QR кода при изменении суммы
+        document.getElementById('amountInput').addEventListener('input', function() {
+            const amount = this.value;
+            document.getElementById('qrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${amount}`;
+        });
+
+        // Кнопка покупки
+        const buyBtn = document.getElementById('buyBtn');
+        if (buyBtn) {
+            buyBtn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const productPrice = parseFloat(this.getAttribute('data-product-price'));
+                const productName = this.getAttribute('data-product-name');
+                
+                // Обновляем скрытое поле с productId
+                document.getElementById('hiddenProductId').value = productId;
+                
+                // Обновляем данные в модальном окне подтверждения
+                document.getElementById('confirmProductName').textContent = productName;
+                document.getElementById('confirmProductPrice').textContent = productPrice.toLocaleString('ru-RU') + ' ₽';
+                
+                const userBalance = @(ViewBag.UserBalance ?? 0);
+                document.getElementById('confirmUserBalance').textContent = userBalance.toLocaleString('ru-RU') + ' ₽';
+                document.getElementById('confirmRemainingBalance').textContent = (userBalance - productPrice).toLocaleString('ru-RU') + ' ₽';
+                
+                // Показываем модальное окно подтверждения
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmPurchaseModal'));
+                confirmModal.show();
+            });
+        }
+
+        // Подтверждение покупки
+        document.getElementById('confirmPurchaseBtn').addEventListener('click', function() {
+            const form = document.getElementById('purchaseForm');
+            const formData = new URLSearchParams(new FormData(form));
+            
+            // Отправляем запрос на покупку
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Закрываем модальное окно подтверждения
+                    const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmPurchaseModal'));
+                    confirmModal.hide();
+                    
+                    // Показываем модальное окно успеха
+                    document.getElementById('successMessage').textContent = data.message;
+                    const successModal = new bootstrap.Modal(document.getElementById('successPurchaseModal'));
+                    successModal.show();
+                } else {
+                    alert(data.message || 'Произошла ошибка при покупке товара');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при покупке товара');
+            });
+        });
+    </script>
+}
