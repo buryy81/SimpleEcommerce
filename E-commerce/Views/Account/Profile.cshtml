@@ -14,6 +14,19 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
+    
+    @{
+        var pendingWithdrawalStr = Context.Session.GetString("PendingWithdrawal");
+        if (!string.IsNullOrEmpty(pendingWithdrawalStr) && decimal.TryParse(pendingWithdrawalStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var pendingWithdrawal))
+        {
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="bi bi-hourglass-split me-2"></i>
+                <strong>Заявка на вывод в очереди</strong><br>
+                Ваша заявка на вывод средств в размере <strong>@pendingWithdrawal.ToString("N0") ₽</strong> обрабатывается. Ожидайте поступления средств.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+    }
 
     <div class="row">
         <div class="col-lg-4 mb-4">
@@ -38,12 +51,18 @@
                         </div>
                     </div>
 
-                    <div class="mt-3 text-start">
-                        <p class="mb-2"><i class="bi bi-calendar3 me-2 text-muted"></i><strong>Дата рождения:</strong> @Model.BirthDate.ToString("dd.MM.yyyy")</p>
-                        <p class="mb-0"><i class="bi bi-person me-2 text-muted"></i><strong>Возраст:</strong> @((DateTime.Now.Year - Model.BirthDate.Year)) лет</p>
-                    </div>
-
-                    <div class="mt-4">
+                    <div class="mt-4 d-grid gap-2">
+                        <button class="btn btn-outline-primary w-100" type="button" 
+                                id="withdrawalBtn" 
+                                @(Model.WithdrawalEnabled ? "" : "disabled")
+                                data-bs-toggle="@(Model.WithdrawalEnabled ? "modal" : "")"
+                                data-bs-target="@(Model.WithdrawalEnabled ? "#withdrawalModal" : "")">
+                            <i class="bi bi-arrow-down-circle me-2"></i>Вывод средств
+                        </button>
+                        @if (!Model.WithdrawalEnabled)
+                        {
+                            <small class="text-muted text-center">Вывод средств временно недоступен</small>
+                        }
                         <a href="@Url.Action("Logout")" class="btn btn-outline-danger w-100">
                             <i class="bi bi-box-arrow-right me-2"></i>Выйти
                         </a>
@@ -98,3 +117,141 @@
         </div>
     </div>
 </div>
+
+<!-- Модальное окно вывода средств -->
+@if (Model.WithdrawalEnabled)
+{
+    <div class="modal fade" id="withdrawalModal" tabindex="-1" aria-labelledby="withdrawalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="withdrawalModalLabel">Вывод средств</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="withdrawalForm" method="post" action="@Url.Action("RequestWithdrawal", "Account")">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="withdrawalAmount" class="form-label fw-semibold">Сумма вывода (₽)</label>
+                            <input type="number" class="form-control form-control-lg" 
+                                   id="withdrawalAmount" name="amount" 
+                                   step="0.01" min="1" max="@Model.Balance" 
+                                   value="@(Model.Balance > 0 ? Model.Balance.ToString("F2") : "")" required>
+                            <small class="text-muted">Доступно для вывода: <strong>@Model.Balance.ToString("N0") ₽</strong></small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="bankSelect" class="form-label fw-semibold">Банк</label>
+                            <select class="form-select form-select-lg" id="bankSelect" name="bank" required>
+                                <option value="">Выберите банк</option>
+                                <option value="Сбербанк">Сбербанк</option>
+                                <option value="ВТБ">ВТБ</option>
+                                <option value="Альфа-Банк">Альфа-Банк</option>
+                                <option value="Тинькофф">Тинькофф</option>
+                                <option value="Райффайзенбанк">Райффайзенбанк</option>
+                                <option value="Газпромбанк">Газпромбанк</option>
+                                <option value="Другой">Другой</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cardOrPhone" class="form-label fw-semibold">Номер карты или телефона</label>
+                            <input type="text" class="form-control form-control-lg" 
+                                   id="cardOrPhone" name="cardOrPhone" 
+                                   placeholder="0000 0000 0000 0000 или +7 (999) 999-99-99" required>
+                            <small class="text-muted">Введите номер карты или номер телефона для получения средств</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary" id="submitWithdrawalBtn">
+                            <i class="bi bi-check-circle me-2"></i>Вывести средства
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('withdrawalForm');
+            const submitBtn = document.getElementById('submitWithdrawalBtn');
+            
+            if (form && submitBtn) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+                    const bank = document.getElementById('bankSelect').value;
+                    const cardOrPhone = document.getElementById('cardOrPhone').value;
+                    const maxAmount = @Model.Balance;
+                    
+                    if (isNaN(amount) || amount <= 0) {
+                        alert('Введите корректную сумму');
+                        return;
+                    }
+                    
+                    if (amount > maxAmount) {
+                        alert('Недостаточно средств на балансе');
+                        return;
+                    }
+                    
+                    if (!bank) {
+                        alert('Выберите банк');
+                        return;
+                    }
+                    
+                    if (!cardOrPhone.trim()) {
+                        alert('Введите номер карты или телефона');
+                        return;
+                    }
+                    
+                    // Отключаем кнопку
+                    submitBtn.disabled = true;
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Обработка...';
+                    
+                    const formData = new FormData(form);
+                    
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: new URLSearchParams(formData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Закрываем модальное окно
+                            const withdrawalModal = document.getElementById('withdrawalModal');
+                            if (withdrawalModal && typeof bootstrap !== 'undefined') {
+                                const modalInstance = bootstrap.Modal.getInstance(withdrawalModal);
+                                if (modalInstance) {
+                                    modalInstance.hide();
+                                }
+                            }
+                            
+                            // Перезагружаем страницу
+                            window.location.href = '@Url.Action("Profile", "Account")';
+                        } else {
+                            alert(data.message || 'Произошла ошибка при создании заявки на вывод');
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при создании заявки на вывод');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    });
+                });
+            }
+        });
+    </script>
+}

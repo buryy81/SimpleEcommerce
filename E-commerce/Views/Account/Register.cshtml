@@ -39,15 +39,9 @@
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="BirthDate" class="form-label">Дата рождения</label>
-                            <input asp-for="BirthDate" type="date" class="form-control" required>
-                            <span asp-validation-for="BirthDate" class="text-danger"></span>
-                        </div>
-
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-success">Зарегистрироваться</button>
-                            <a href="@Url.Action("Login")" class="btn btn-outline-secondary">
+                            <a href="@Url.Action("Login", "Account")" class="btn btn-outline-secondary">
                                 Уже есть аккаунт? Войти
                             </a>
                         </div>

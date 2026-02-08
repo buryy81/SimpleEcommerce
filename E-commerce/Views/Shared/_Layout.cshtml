@@ -6,7 +6,6 @@
     <title>@ViewData["Title"] - Magaz</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/E_commerce.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"/>
 </head>
 <body>
@@ -53,12 +52,36 @@
                             if (userJson != null)
                             {
                                 var user = System.Text.Json.JsonSerializer.Deserialize<SimpleEcommerce.Models.User>(userJson);
+                                var pendingTopUpStr = Context.Session.GetString("PendingTopUp");
+                                decimal? pendingTopUp = null;
+                                if (!string.IsNullOrEmpty(pendingTopUpStr) && decimal.TryParse(pendingTopUpStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var pendingAmount))
+                                {
+                                    pendingTopUp = pendingAmount;
+                                }
+                                
                                 <li class="nav-item me-3">
-                                    <div class="balance-display d-flex align-items-center px-3 py-2 bg-light rounded">
-                                        <i class="bi bi-wallet2 text-success me-2"></i>
-                                        <span class="fw-bold text-success">@user.Balance.ToString("N0") ₽</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="balance-display d-flex align-items-center px-3 py-2 bg-light rounded">
+                                            <i class="bi bi-wallet2 text-success me-2"></i>
+                                            <span class="fw-bold text-success">@user.Balance.ToString("N0") ₽</span>
+                                        </div>
+                                        @if (pendingTopUp.HasValue)
+                                        {
+                                            <div class="pending-topup-badge badge bg-warning text-dark px-2 py-1" style="font-size: 0.75rem; white-space: nowrap;">
+                                                <i class="bi bi-hourglass-split me-1"></i>
+                                                Ожидается +@pendingTopUp.Value.ToString("N0") ₽
+                                            </div>
+                                        }
                                     </div>
                                 </li>
+                                @if (user.Email == "admin@admin.com")
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link text-warning fw-semibold" href="@Url.Action("Index", "Admin")">
+                                            <i class="bi bi-shield-check me-1"></i>Админ-панель
+                                        </a>
+                                    </li>
+                                }
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" href="@Url.Action("Profile", "Account")">
                                         <i class="bi bi-person-circle me-1"></i> @user.FirstName

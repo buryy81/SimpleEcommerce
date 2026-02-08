@@ -36,6 +36,11 @@
         
         <div class="col-lg-6">
             <div class="product-info">
+                <div class="mb-2">
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-shop me-1"></i>@(Model.StoreName ?? "Магазин")
+                    </span>
+                </div>
                 <h1 class="fw-bold mb-3">@Model.Name</h1>
                 
                 <div class="rating mb-3">
@@ -72,33 +77,22 @@
                 <div class="action-buttons">
                     @{
                         bool hasEnoughBalance = ViewBag.HasEnoughBalance ?? false;
-                        decimal userBalance = ViewBag.UserBalance ?? 0;
-                        bool isLoggedIn = userBalance > 0 || ViewBag.UserBalance != null;
                     }
                     
-                    @if (isLoggedIn)
+                    @if (hasEnoughBalance)
                     {
-                        @if (hasEnoughBalance)
-                        {
-                            <button class="btn btn-primary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" id="buyBtn" data-product-id="@Model.Id" data-product-price="@Model.Price" data-product-name="@Model.Name">
-                                <i class="bi bi-cart-plus me-2"></i>Купить
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-secondary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" disabled>
-                                <i class="bi bi-cart-x me-2"></i>Недостаточно средств
-                            </button>
-                            <button class="btn btn-success btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" data-bs-toggle="modal" data-bs-target="#paymentModal">
-                                <i class="bi bi-wallet2 me-2"></i>Пополнить баланс
-                            </button>
-                        }
+                        <button class="btn btn-primary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" id="buyBtn" data-product-id="@Model.Id" data-product-price="@Model.Price" data-product-name="@Model.Name" data-store-name="@(Model.StoreName ?? "Магазин")">
+                            <i class="bi bi-cart-plus me-2"></i>Купить
+                        </button>
                     }
                     else
                     {
-                        <a href="@Url.Action("Login", "Account")" class="btn btn-primary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Войти для покупки
-                        </a>
+                        <button class="btn btn-secondary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" disabled>
+                            <i class="bi bi-cart-x me-2"></i>Недостаточно средств
+                        </button>
+                        <button class="btn btn-success btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                            <i class="bi bi-wallet2 me-2"></i>Пополнить баланс
+                        </button>
                     }
                     
                     <div class="row g-2">
@@ -122,7 +116,7 @@
                 </div>
             </div>
         </div>
-    </div>
+            </div>
 
     <div class="row mt-5">
         <div class="col-12">
@@ -175,6 +169,10 @@
                     </div>
                     <div class="card mb-3">
                         <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Магазин:</span>
+                                <span class="fw-semibold" id="confirmStoreName">@(Model.StoreName ?? "Магазин")</span>
+                            </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">Товар:</span>
                                 <span class="fw-semibold" id="confirmProductName">@Model.Name</span>
@@ -252,8 +250,8 @@
                         <p class="mb-2 fw-semibold">Или отсканируйте QR-код</p>
                         <div class="bg-light p-3 rounded d-inline-block">
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=1000" alt="QR Code" class="img-fluid" style="max-width: 200px;" id="qrCode">
-                        </div>
-                    </div>
+                </div>
+            </div>
 
                     <div class="alert alert-info mb-0">
                         <i class="bi bi-info-circle me-2"></i>
@@ -265,7 +263,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 <button type="button" class="btn btn-primary" id="confirmPaymentBtn">
                     <i class="bi bi-check-circle me-2"></i>Перевел
-                </button>
+            </button>
             </div>
         </div>
     </div>
@@ -297,149 +295,332 @@
 
 @section Scripts {
     <script>
-        // Кнопка избранное
-        const favoriteBtn = document.getElementById('favoriteBtn');
-        favoriteBtn.addEventListener('click', function() {
-            if (this.classList.contains('active')) {
-                this.classList.remove('active', 'btn-primary');
-                this.classList.add('btn-outline-primary');
-                this.querySelector('i').classList.remove('bi-heart-fill');
-                this.querySelector('i').classList.add('bi-heart');
-            } else {
-                this.classList.add('active', 'btn-primary');
-                this.classList.remove('btn-outline-primary');
-                this.querySelector('i').classList.remove('bi-heart');
-                this.querySelector('i').classList.add('bi-heart-fill');
-            }
-        });
-
-        // Копирование ссылки
-        document.getElementById('copyLinkBtn').addEventListener('click', function() {
-            const url = window.location.href;
-            navigator.clipboard.writeText(url).then(function() {
-                const btn = document.getElementById('copyLinkBtn');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="bi bi-check me-2"></i>Скопировано';
-                btn.classList.remove('btn-outline-secondary');
-                btn.classList.add('btn-success');
-                setTimeout(function() {
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('btn-success');
-                    btn.classList.add('btn-outline-secondary');
-                }, 2000);
-            });
-        });
-
-        // Копирование номера карты
-        document.getElementById('copyCardBtn').addEventListener('click', function() {
-            const cardNumber = document.getElementById('cardNumber').value;
-            navigator.clipboard.writeText(cardNumber.replace(/\s/g, '')).then(function() {
-                const btn = document.getElementById('copyCardBtn');
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="bi bi-check"></i>';
-                btn.classList.remove('btn-outline-secondary');
-                btn.classList.add('btn-success');
-                setTimeout(function() {
-                    btn.innerHTML = originalHtml;
-                    btn.classList.remove('btn-success');
-                    btn.classList.add('btn-outline-secondary');
-                }, 2000);
-            });
-        });
-
-        // Подтверждение платежа (пополнение баланса)
-        document.getElementById('confirmPaymentBtn').addEventListener('click', function() {
-            const form = document.getElementById('addFundsForm');
+        // Используем делегирование событий на document для надежности
+        document.addEventListener('DOMContentLoaded', function() {
+            'use strict';
             
-            // Отправляем форму
-            fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams(new FormData(form))
-            })
-            .then(response => {
-                if (response.ok) {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
-                    modal.hide();
+            console.log('Скрипт загружен, инициализация кнопок...');
+            
+            // ========== Кнопка "В избранное" ==========
+            document.addEventListener('click', function(e) {
+                const favoriteBtn = e.target.closest('#favoriteBtn');
+                if (favoriteBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Кнопка избранное нажата');
                     
-                    // Показываем плашку ожидания
-                    const alert = document.getElementById('waitingAlert');
-                    alert.style.display = 'block';
+                    const icon = favoriteBtn.querySelector('i');
+                    if (!icon) {
+                        console.error('Иконка не найдена');
+                        return;
+                    }
                     
-                    // Автоматически скрываем через 10 секунд и перезагружаем страницу
-                    setTimeout(function() {
-                        const bsAlert = new bootstrap.Alert(alert);
-                        bsAlert.close();
-                        location.reload();
-                    }, 10000);
+                    if (favoriteBtn.classList.contains('active')) {
+                        favoriteBtn.classList.remove('active', 'btn-primary');
+                        favoriteBtn.classList.add('btn-outline-primary');
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                    } else {
+                        favoriteBtn.classList.add('active', 'btn-primary');
+                        favoriteBtn.classList.remove('btn-outline-primary');
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                    }
                 }
             });
-        });
 
-        // Обновление QR кода при изменении суммы
-        document.getElementById('amountInput').addEventListener('input', function() {
-            const amount = this.value;
-            document.getElementById('qrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${amount}`;
-        });
-
-        // Кнопка покупки
-        const buyBtn = document.getElementById('buyBtn');
-        if (buyBtn) {
-            buyBtn.addEventListener('click', function() {
-                const productId = this.getAttribute('data-product-id');
-                const productPrice = parseFloat(this.getAttribute('data-product-price'));
-                const productName = this.getAttribute('data-product-name');
-                
-                // Обновляем скрытое поле с productId
-                document.getElementById('hiddenProductId').value = productId;
-                
-                // Обновляем данные в модальном окне подтверждения
-                document.getElementById('confirmProductName').textContent = productName;
-                document.getElementById('confirmProductPrice').textContent = productPrice.toLocaleString('ru-RU') + ' ₽';
-                
-                const userBalance = @(ViewBag.UserBalance ?? 0);
-                document.getElementById('confirmUserBalance').textContent = userBalance.toLocaleString('ru-RU') + ' ₽';
-                document.getElementById('confirmRemainingBalance').textContent = (userBalance - productPrice).toLocaleString('ru-RU') + ' ₽';
-                
-                // Показываем модальное окно подтверждения
-                const confirmModal = new bootstrap.Modal(document.getElementById('confirmPurchaseModal'));
-                confirmModal.show();
-            });
-        }
-
-        // Подтверждение покупки
-        document.getElementById('confirmPurchaseBtn').addEventListener('click', function() {
-            const form = document.getElementById('purchaseForm');
-            const formData = new URLSearchParams(new FormData(form));
-            
-            // Отправляем запрос на покупку
-            fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Закрываем модальное окно подтверждения
-                    const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmPurchaseModal'));
-                    confirmModal.hide();
+            // ========== Кнопка "Копировать ссылку" ==========
+            document.addEventListener('click', function(e) {
+                const copyLinkBtn = e.target.closest('#copyLinkBtn');
+                if (copyLinkBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Кнопка копирования ссылки нажата');
                     
-                    // Показываем модальное окно успеха
-                    document.getElementById('successMessage').textContent = data.message;
-                    const successModal = new bootstrap.Modal(document.getElementById('successPurchaseModal'));
-                    successModal.show();
-                } else {
-                    alert(data.message || 'Произошла ошибка при покупке товара');
+                    const url = window.location.href;
+                    const originalText = copyLinkBtn.innerHTML;
+                    
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(url)
+                            .then(() => {
+                                copyLinkBtn.innerHTML = '<i class="bi bi-check me-2"></i>Скопировано';
+                                copyLinkBtn.classList.remove('btn-outline-secondary');
+                                copyLinkBtn.classList.add('btn-success');
+                                
+                                setTimeout(() => {
+                                    copyLinkBtn.innerHTML = originalText;
+                                    copyLinkBtn.classList.remove('btn-success');
+                                    copyLinkBtn.classList.add('btn-outline-secondary');
+                                }, 2000);
+                            })
+                            .catch(err => {
+                                console.error('Ошибка копирования:', err);
+                                alert('Не удалось скопировать ссылку');
+                            });
+                    } else {
+                        // Fallback для старых браузеров
+                        const textArea = document.createElement('textarea');
+                        textArea.value = url;
+                        textArea.style.position = 'fixed';
+                        textArea.style.opacity = '0';
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                            document.execCommand('copy');
+                            copyLinkBtn.innerHTML = '<i class="bi bi-check me-2"></i>Скопировано';
+                            copyLinkBtn.classList.remove('btn-outline-secondary');
+                            copyLinkBtn.classList.add('btn-success');
+                            setTimeout(() => {
+                                copyLinkBtn.innerHTML = originalText;
+                                copyLinkBtn.classList.remove('btn-success');
+                                copyLinkBtn.classList.add('btn-outline-secondary');
+                            }, 2000);
+                        } catch (err) {
+                            console.error('Ошибка копирования:', err);
+                            alert('Не удалось скопировать ссылку');
+                        }
+                        document.body.removeChild(textArea);
+                    }
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Произошла ошибка при покупке товара');
+            });
+
+            // ========== Кнопка "Купить" ==========
+            document.addEventListener('click', function(e) {
+                const buyBtn = e.target.closest('#buyBtn');
+                if (buyBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Кнопка купить нажата');
+                    
+                    const productId = buyBtn.getAttribute('data-product-id');
+                    const productPrice = parseFloat(buyBtn.getAttribute('data-product-price'));
+                    const productName = buyBtn.getAttribute('data-product-name');
+                    const storeName = buyBtn.getAttribute('data-store-name') || 'Магазин';
+                    
+                    if (!productId || !productPrice || !productName) {
+                        console.error('Неверные данные товара');
+                        return;
+                    }
+                    
+                    // Обновляем скрытое поле с productId
+                    const hiddenProductId = document.getElementById('hiddenProductId');
+                    if (hiddenProductId) {
+                        hiddenProductId.value = productId;
+                    }
+                    
+                    // Обновляем данные в модальном окне подтверждения
+                    const confirmStoreName = document.getElementById('confirmStoreName');
+                    const confirmProductName = document.getElementById('confirmProductName');
+                    const confirmProductPrice = document.getElementById('confirmProductPrice');
+                    const confirmUserBalance = document.getElementById('confirmUserBalance');
+                    const confirmRemainingBalance = document.getElementById('confirmRemainingBalance');
+                    
+                    const userBalance = parseFloat('@((ViewBag.UserBalance ?? 0m).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))');
+                    const remainingBalance = userBalance - productPrice;
+                    
+                    if (confirmStoreName) confirmStoreName.textContent = storeName;
+                    if (confirmProductName) confirmProductName.textContent = productName;
+                    if (confirmProductPrice) confirmProductPrice.textContent = productPrice.toLocaleString('ru-RU') + ' ₽';
+                    if (confirmUserBalance) confirmUserBalance.textContent = userBalance.toLocaleString('ru-RU') + ' ₽';
+                    if (confirmRemainingBalance) confirmRemainingBalance.textContent = remainingBalance.toLocaleString('ru-RU') + ' ₽';
+                    
+                    // Показываем модальное окно подтверждения
+                    const confirmPurchaseModal = document.getElementById('confirmPurchaseModal');
+                    if (confirmPurchaseModal && typeof bootstrap !== 'undefined') {
+                        const confirmModal = new bootstrap.Modal(confirmPurchaseModal);
+                        confirmModal.show();
+                    } else {
+                        console.error('Bootstrap не загружен или модальное окно не найдено');
+                    }
+                }
+            });
+
+            // ========== Кнопка "Копировать номер карты" ==========
+            document.addEventListener('click', function(e) {
+                const copyCardBtn = e.target.closest('#copyCardBtn');
+                if (copyCardBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const cardNumber = document.getElementById('cardNumber');
+                    if (!cardNumber) return;
+                    
+                    const cardNumberText = cardNumber.value.replace(/\s/g, '');
+                    const originalHtml = copyCardBtn.innerHTML;
+                    
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(cardNumberText)
+                            .then(() => {
+                                copyCardBtn.innerHTML = '<i class="bi bi-check"></i>';
+                                copyCardBtn.classList.remove('btn-outline-secondary');
+                                copyCardBtn.classList.add('btn-success');
+                                
+                                setTimeout(() => {
+                                    copyCardBtn.innerHTML = originalHtml;
+                                    copyCardBtn.classList.remove('btn-success');
+                                    copyCardBtn.classList.add('btn-outline-secondary');
+                                }, 2000);
+                            });
+                    }
+                }
+            });
+
+            // ========== Обновление QR кода при изменении суммы ==========
+            document.addEventListener('input', function(e) {
+                if (e.target && e.target.id === 'amountInput') {
+                    const amount = e.target.value || '1000';
+                    const qrCode = document.getElementById('qrCode');
+                    if (qrCode) {
+                        qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(amount)}`;
+                    }
+                }
+            });
+
+            // ========== Кнопка "Пополнить баланс" (подтверждение платежа) ==========
+            document.addEventListener('click', function(e) {
+                const confirmPaymentBtn = e.target.closest('#confirmPaymentBtn');
+                if (confirmPaymentBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const form = document.getElementById('addFundsForm');
+                    if (!form) {
+                        console.error('Форма пополнения не найдена');
+                        return;
+                    }
+                    
+                    const formData = new FormData(form);
+                    const amount = formData.get('amount');
+                    
+                    if (!amount || parseFloat(amount) < 100) {
+                        alert('Минимальная сумма пополнения: 100 ₽');
+                        return;
+                    }
+                    
+                    // Отправляем форму
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: new URLSearchParams(formData)
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Закрываем модальное окно
+                            const paymentModal = document.getElementById('paymentModal');
+                            if (paymentModal && typeof bootstrap !== 'undefined') {
+                                const modalInstance = bootstrap.Modal.getInstance(paymentModal);
+                                if (modalInstance) {
+                                    modalInstance.hide();
+                                }
+                            }
+                            
+                            // Показываем плашку ожидания
+                            const alert = document.getElementById('waitingAlert');
+                            if (alert) {
+                                alert.style.display = 'block';
+                                
+                                // Автоматически скрываем через 10 секунд и перезагружаем страницу
+                                setTimeout(() => {
+                                    if (typeof bootstrap !== 'undefined') {
+                                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                                        bsAlert.close();
+                                    }
+                                    setTimeout(() => {
+                                        // Удаляем информацию о ожидающем пополнении из сессии
+                                        fetch('@Url.Action("ClearPendingTopUp", "Account")', {
+                                            method: 'GET'
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    }, 300);
+                                }, 10000);
+                            }
+                        } else {
+                            alert('Произошла ошибка при пополнении баланса');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при пополнении баланса:', error);
+                        alert('Произошла ошибка при пополнении баланса');
+                    });
+                }
+            });
+
+            // ========== Кнопка "Подтвердить покупку" ==========
+            document.addEventListener('click', function(e) {
+                const confirmPurchaseBtn = e.target.closest('#confirmPurchaseBtn');
+                if (confirmPurchaseBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const form = document.getElementById('purchaseForm');
+                    if (!form) {
+                        console.error('Форма покупки не найдена');
+                        return;
+                    }
+                    
+                    // Отключаем кнопку на время обработки
+                    confirmPurchaseBtn.disabled = true;
+                    const originalText = confirmPurchaseBtn.innerHTML;
+                    confirmPurchaseBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Обработка...';
+                    
+                    const formData = new FormData(form);
+                    
+                    // Отправляем запрос на покупку
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: new URLSearchParams(formData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Восстанавливаем кнопку
+                        confirmPurchaseBtn.disabled = false;
+                        confirmPurchaseBtn.innerHTML = originalText;
+                        
+                        if (data.success) {
+                            // Закрываем модальное окно подтверждения
+                            const confirmPurchaseModal = document.getElementById('confirmPurchaseModal');
+                            if (confirmPurchaseModal && typeof bootstrap !== 'undefined') {
+                                const modalInstance = bootstrap.Modal.getInstance(confirmPurchaseModal);
+                                if (modalInstance) {
+                                    modalInstance.hide();
+                                }
+                            }
+                            
+                            // Показываем модальное окно успеха
+                            const successMessage = document.getElementById('successMessage');
+                            if (successMessage) {
+                                successMessage.textContent = data.message || 'Товар успешно куплен!';
+                            }
+                            
+                            const successPurchaseModal = document.getElementById('successPurchaseModal');
+                            if (successPurchaseModal && typeof bootstrap !== 'undefined') {
+                                const successModal = new bootstrap.Modal(successPurchaseModal);
+                                successModal.show();
+                            }
+                        } else {
+                            // Если нужна авторизация, перенаправляем
+                            if (data.redirect && data.url) {
+                                window.location.href = data.url;
+                            } else {
+                                alert(data.message || 'Произошла ошибка при покупке товара');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при покупке:', error);
+                        confirmPurchaseBtn.disabled = false;
+                        confirmPurchaseBtn.innerHTML = originalText;
+                        alert('Произошла ошибка при покупке товара');
+                    });
+                }
             });
         });
     </script>

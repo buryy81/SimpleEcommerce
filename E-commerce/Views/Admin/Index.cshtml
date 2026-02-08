@@ -1,0 +1,90 @@
+@model List<SimpleEcommerce.Models.User>
+
+@{
+    ViewData["Title"] = "Админ-панель - Управление пользователями";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">
+            <i class="bi bi-shield-check text-primary me-2"></i>Админ-панель
+        </h1>
+        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>На главную
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" action="@Url.Action("Index")" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" class="form-control" name="search" value="@ViewBag.Search" 
+                           placeholder="Поиск по ID, Email, имени или фамилии...">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-2"></i>Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-people me-2"></i>Список пользователей (@Model.Count)
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Имя</th>
+                                <th>Email</th>
+                                <th>Баланс</th>
+                                <th>Вывод</th>
+                                <th class="text-end">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@user.Id</td>
+                                    <td>@user.FullName</td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        <span class="badge bg-success fs-6">@user.Balance.ToString("N0") ₽</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(user.WithdrawalEnabled ? "bg-success" : "bg-secondary")">
+                                            @(user.WithdrawalEnabled ? "Разрешен" : "Запрещен")
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="@Url.Action("EditBalance", new { id = user.Id })" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil me-1"></i>Изменить баланс
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox text-muted" style="font-size: 48px;"></i>
+                    <p class="text-muted mt-3 mb-0">Пользователи не найдены</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

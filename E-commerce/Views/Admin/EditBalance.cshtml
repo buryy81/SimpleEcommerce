@@ -1,0 +1,283 @@
+@model SimpleEcommerce.Models.User
+@using SimpleEcommerce.Models
+
+@{
+    ViewData["Title"] = $"Изменение баланса - {Model.FullName}";
+    var transactions = ViewBag.Transactions as List<Transaction> ?? new List<Transaction>();
+}
+
+<div class="container mt-4">
+    <div class="mb-4">
+        <a href="@Url.Action("Index")" class="text-decoration-none">
+            <i class="bi bi-arrow-left me-2"></i>Вернуться к списку пользователей
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>Информация о пользователе
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">ID</label>
+                        <p class="fw-bold mb-0">@Model.Id</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Имя</label>
+                        <p class="mb-0">@Model.FullName</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Email</label>
+                        <p class="mb-0">@Model.Email</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">Текущий баланс</label>
+                        <p class="h4 fw-bold text-success mb-0">@Model.Balance.ToString("N0") ₽</p>
+                    </div>
+                    <div class="mb-0">
+                        <label class="text-muted small">Вывод средств</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge @(Model.WithdrawalEnabled ? "bg-success" : "bg-secondary")">
+                                @(Model.WithdrawalEnabled ? "Разрешен" : "Запрещен")
+                            </span>
+                            <div>
+                                @Html.AntiForgeryToken()
+                                <button type="button" class="btn btn-sm @(Model.WithdrawalEnabled ? "btn-outline-danger" : "btn-outline-success")" 
+                                        id="toggleWithdrawalBtn" 
+                                        data-user-id="@Model.Id" 
+                                        data-enabled="@Model.WithdrawalEnabled.ToString().ToLower()">
+                                    <i class="bi @(Model.WithdrawalEnabled ? "bi-x-circle" : "bi-check-circle") me-1"></i>
+                                    @(Model.WithdrawalEnabled ? "Запретить" : "Разрешить")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-wallet2 me-2"></i>Изменение баланса
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="balanceForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="userId" name="userId" value="@Model.Id" />
+                        
+                        <div class="mb-3">
+                            <label for="newBalance" class="form-label fw-semibold">Новый баланс (₽)</label>
+                            <input type="number" class="form-control form-control-lg" 
+                                   id="newBalance" name="newBalance" step="0.01" min="0" 
+                                   value="@Model.Balance.ToString("F2")" required>
+                            <small class="text-muted">Текущий баланс: <strong>@Model.Balance.ToString("N0") ₽</strong></small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="reason" class="form-label fw-semibold">Причина изменения (необязательно)</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3" 
+                                      placeholder="Укажите причину изменения баланса..."></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="updateBtn">
+                                <i class="bi bi-check-circle me-2"></i>Обновить баланс
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-clock-history me-2"></i>Последние транзакции
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (transactions.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var transaction in transactions)
+                            {
+                                var isPositive = transaction.Amount > 0;
+                                var badgeClass = isPositive ? "bg-success" : "bg-danger";
+                                var amountDisplay = isPositive ? $"+{transaction.Amount:N0}" : $"{transaction.Amount:N0}";
+                                
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@transaction.Description</h6>
+                                            <small class="text-muted">@transaction.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</small>
+                                        </div>
+                                        <span class="badge @badgeClass fs-6">@amountDisplay ₽</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">Нет транзакций</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Переключение разрешения на вывод средств
+            const toggleWithdrawalBtn = document.getElementById('toggleWithdrawalBtn');
+            if (toggleWithdrawalBtn) {
+                toggleWithdrawalBtn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const currentEnabled = this.getAttribute('data-enabled') === 'true';
+                    
+                    if (!confirm(`Вы уверены, что хотите ${currentEnabled ? 'запретить' : 'разрешить'} вывод средств для этого пользователя?`)) {
+                        return;
+                    }
+                    
+                    this.disabled = true;
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                    
+                    // Получаем токен из формы
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    if (!token) {
+                        alert('Ошибка: токен безопасности не найден. Перезагрузите страницу.');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                        return;
+                    }
+                    
+                    const urlParams = new URLSearchParams();
+                    urlParams.append('userId', userId);
+                    urlParams.append('__RequestVerificationToken', token);
+                    
+                    fetch('@Url.Action("ToggleWithdrawal", "Admin")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: urlParams
+                    })
+                    .then(response => {
+                        console.log('ToggleWithdrawal response status:', response.status);
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                console.error('Response text:', text);
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('ToggleWithdrawal response data:', data);
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Произошла ошибка');
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при изменении разрешения на вывод. Проверьте консоль браузера (F12) для деталей.');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    });
+                });
+            }
+            
+            const form = document.getElementById('balanceForm');
+            const updateBtn = document.getElementById('updateBtn');
+            
+            if (form && updateBtn) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const userId = document.getElementById('userId').value;
+                    const newBalanceInput = document.getElementById('newBalance');
+                    const newBalance = parseFloat(newBalanceInput.value);
+                    const reason = document.getElementById('reason').value;
+                    
+                    if (isNaN(newBalance) || newBalance < 0) {
+                        alert('Введите корректную сумму');
+                        return;
+                    }
+                    
+                    if (!confirm(`Вы уверены, что хотите изменить баланс пользователя на ${newBalance.toLocaleString('ru-RU')} ₽?`)) {
+                        return;
+                    }
+                    
+                    // Отключаем кнопку
+                    updateBtn.disabled = true;
+                    const originalText = updateBtn.innerHTML;
+                    updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Обновление...';
+                    
+                    // Используем FormData из формы
+                    const formDataObj = new FormData(form);
+                    
+                    // Конвертируем FormData в URLSearchParams для правильной отправки
+                    const urlParams = new URLSearchParams();
+                    for (const [key, value] of formDataObj.entries()) {
+                        urlParams.append(key, value);
+                    }
+                    
+                    // Убеждаемся, что userId и newBalance переданы правильно
+                    urlParams.set('userId', userId);
+                    urlParams.set('newBalance', newBalance.toString().replace(',', '.'));
+                    
+                    fetch('@Url.Action("UpdateBalance", "Admin")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: urlParams
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                console.error('Response text:', text);
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response data:', data);
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Произошла ошибка');
+                            updateBtn.disabled = false;
+                            updateBtn.innerHTML = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при обновлении баланса. Проверьте консоль браузера (F12) для деталей.');
+                        updateBtn.disabled = false;
+                        updateBtn.innerHTML = originalText;
+                    });
+                });
+            }
+        });
+    </script>
+}

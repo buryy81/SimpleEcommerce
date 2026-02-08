@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace SimpleEcommerce.Models;
 
@@ -27,15 +28,16 @@ public class User
 	public string LastName { get; set; }
 
 	[Required]
-	public DateTime BirthDate { get; set; }
+	[Column(TypeName = "decimal(18,2)")]
+	public decimal Balance { get; set; } = 0; // Начальный баланс
 
 	[Required]
-	[Column(TypeName = "decimal(18,2)")]
-	public decimal Balance { get; set; } = 10000; // Стартовый баланс
+	public bool WithdrawalEnabled { get; set; } = false; // Разрешен ли вывод средств администратором
 
 	[NotMapped]
 	public string FullName => $"{FirstName} {LastName}";
 
 	// Навигационное свойство для транзакций
+	[JsonIgnore]
 	public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimpleEcommerce.Data;
@@ -9,6 +10,11 @@ namespace SimpleEcommerce.Controllers;
 public class AccountController : Controller
 {
 	private readonly ApplicationDbContext _context;
+	private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+	{
+		ReferenceHandler = ReferenceHandler.IgnoreCycles,
+		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+	};
 
 	public AccountController(ApplicationDbContext context)
 	{
@@ -18,11 +24,11 @@ public class AccountController : Controller
 	// GET: /Account/Login
 	public IActionResult Login()
 	{
-		// Если пользователь не авторизован, перенаправляем на регистрацию
+		// Если пользователь уже авторизован, перенаправляем в профиль
 		var userJson = HttpContext.Session.GetString("User");
-		if (string.IsNullOrEmpty(userJson))
+		if (!string.IsNullOrEmpty(userJson))
 		{
-			return RedirectToAction("Register");
+			return RedirectToAction("Profile");
 		}
 		return View();
 	}
@@ -36,8 +42,8 @@ public class AccountController : Controller
 
 		if (user != null)
 		{
-			// Сохраняем пользователя в сессии
-			HttpContext.Session.SetString("User", JsonSerializer.Serialize(user));
+			// Сохраняем пользователя в сессии (без навигационных свойств)
+			HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, JsonOptions));
 			return RedirectToAction("Profile");
 		}
 
@@ -67,43 +73,13 @@ public class AccountController : Controller
 				return View(user);
 			}
 
-			// Конвертируем BirthDate в UTC если необходимо
-			// Дата из формы приходит как Unspecified, нужно конвертировать в UTC
-			if (user.BirthDate.Kind == DateTimeKind.Unspecified)
-			{
-				// Предполагаем, что дата рождения введена в локальном времени
-				// Конвертируем в UTC, сохраняя только дату (без времени)
-				user.BirthDate = new DateTime(user.BirthDate.Year, user.BirthDate.Month, user.BirthDate.Day, 0, 0, 0, DateTimeKind.Utc);
-			}
-			else if (user.BirthDate.Kind == DateTimeKind.Local)
-			{
-				user.BirthDate = user.BirthDate.ToUniversalTime();
-			}
-			else if (user.BirthDate.Kind == DateTimeKind.Utc)
-			{
-				// Уже UTC, но убедимся что время установлено на начало дня
-				user.BirthDate = new DateTime(user.BirthDate.Year, user.BirthDate.Month, user.BirthDate.Day, 0, 0, 0, DateTimeKind.Utc);
-			}
-
-			user.Balance = 10000; // Стартовый баланс
+			user.Balance = 0; // Начальный баланс
 
 			_context.Users.Add(user);
 			await _context.SaveChangesAsync();
 
-			// Создаем транзакцию для регистрационного бонуса
-			var transaction = new Transaction
-			{
-				UserId = user.Id,
-				Type = "Пополнение",
-				Amount = 10000,
-				Description = "Регистрационный бонус",
-				CreatedAt = DateTime.UtcNow
-			};
-			_context.Transactions.Add(transaction);
-			await _context.SaveChangesAsync();
-
-			// Сохраняем в сессии
-			HttpContext.Session.SetString("User", JsonSerializer.Serialize(user));
+			// Сохраняем в сессии (без навигационных свойств)
+			HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, JsonOptions));
 			return RedirectToAction("Profile");
 		}
 
@@ -126,8 +102,43 @@ public class AccountController : Controller
 		if (user == null)
 			return RedirectToAction("Login");
 
-		// Обновляем сессию с актуальными данными
-		HttpContext.Session.SetString("User", JsonSerializer.Serialize(user));
+		// Проверяем активные заявки в БД и синхронизируем с сессией
+		var activeTopUp = await _context.PendingRequests
+			.FirstOrDefaultAsync(p => p.UserId == user.Id && p.Type == "TopUp" && !p.IsCompleted);
+		
+		if (activeTopUp == null && !string.IsNullOrEmpty(HttpContext.Session.GetString("PendingTopUp")))
+		{
+			// Заявка закрыта в БД, но еще есть в сессии - очищаем сессию
+			HttpContext.Session.Remove("PendingTopUp");
+		}
+		else if (activeTopUp != null && string.IsNullOrEmpty(HttpContext.Session.GetString("PendingTopUp")))
+		{
+			// Заявка есть в БД, но нет в сессии - восстанавливаем в сессии
+			HttpContext.Session.SetString("PendingTopUp", activeTopUp.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+		}
+
+		var activeWithdrawal = await _context.PendingRequests
+			.FirstOrDefaultAsync(p => p.UserId == user.Id && p.Type == "Withdrawal" && !p.IsCompleted);
+		
+		if (activeWithdrawal == null && !string.IsNullOrEmpty(HttpContext.Session.GetString("PendingWithdrawal")))
+		{
+			// Заявка закрыта в БД, но еще есть в сессии - очищаем сессию
+			HttpContext.Session.Remove("PendingWithdrawal");
+			HttpContext.Session.Remove("PendingWithdrawalBank");
+			HttpContext.Session.Remove("PendingWithdrawalCardOrPhone");
+		}
+		else if (activeWithdrawal != null && string.IsNullOrEmpty(HttpContext.Session.GetString("PendingWithdrawal")))
+		{
+			// Заявка есть в БД, но нет в сессии - восстанавливаем в сессии
+			HttpContext.Session.SetString("PendingWithdrawal", activeWithdrawal.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+			if (!string.IsNullOrEmpty(activeWithdrawal.Bank))
+				HttpContext.Session.SetString("PendingWithdrawalBank", activeWithdrawal.Bank);
+			if (!string.IsNullOrEmpty(activeWithdrawal.CardOrPhone))
+				HttpContext.Session.SetString("PendingWithdrawalCardOrPhone", activeWithdrawal.CardOrPhone);
+		}
+
+		// Обновляем сессию с актуальными данными (без навигационных свойств)
+		HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, JsonOptions));
 
 		// Получаем транзакции отсортированные по дате
 		var transactions = await _context.Transactions
@@ -150,36 +161,89 @@ public class AccountController : Controller
 
 		var sessionUser = JsonSerializer.Deserialize<User>(userJson);
 		var user = await _context.Users.FindAsync(sessionUser.Id);
-
 		if (user == null)
 			return RedirectToAction("Login");
 
-		user.Balance += amount;
-
-		// Создаем транзакцию
-		var transaction = new Transaction
+		// Сохраняем информацию о ожидающем пополнении в БД
+		var pendingRequest = new PendingRequest
 		{
 			UserId = user.Id,
-			Type = "Пополнение",
+			Type = "TopUp",
 			Amount = amount,
-			Description = "Пополнение баланса",
-			CreatedAt = DateTime.UtcNow
+			CreatedAt = DateTime.UtcNow,
+			IsCompleted = false
 		};
 
-		_context.Transactions.Add(transaction);
+		_context.PendingRequests.Add(pendingRequest);
 		await _context.SaveChangesAsync();
 
-		// Обновляем сессию
-		HttpContext.Session.SetString("User", JsonSerializer.Serialize(user));
+		// Также сохраняем в сессии для отображения плашки
+		HttpContext.Session.SetString("PendingTopUp", amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
 
-		TempData["SuccessMessage"] = $"Баланс успешно пополнен на {amount:N0} ₽";
-		return RedirectToAction("Profile");
+		// Возвращаем успешный ответ (для JavaScript)
+		return Ok();
+	}
+
+	// GET: /Account/ClearPendingTopUp
+	[HttpGet]
+	public IActionResult ClearPendingTopUp()
+	{
+		HttpContext.Session.Remove("PendingTopUp");
+		return Ok();
+	}
+
+	// POST: /Account/RequestWithdrawal
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> RequestWithdrawal(decimal amount, string bank, string cardOrPhone)
+	{
+		var userJson = HttpContext.Session.GetString("User");
+		if (string.IsNullOrEmpty(userJson))
+			return Json(new { success = false, message = "Необходима авторизация" });
+
+		var sessionUser = JsonSerializer.Deserialize<User>(userJson);
+		var user = await _context.Users.FindAsync(sessionUser.Id);
+
+		if (user == null)
+			return Json(new { success = false, message = "Пользователь не найден" });
+
+		if (!user.WithdrawalEnabled)
+			return Json(new { success = false, message = "Вывод средств временно недоступен" });
+
+		if (amount <= 0 || amount > user.Balance)
+			return Json(new { success = false, message = "Неверная сумма для вывода" });
+
+		// Сохраняем информацию о заявке на вывод в БД
+		var pendingRequest = new PendingRequest
+		{
+			UserId = user.Id,
+			Type = "Withdrawal",
+			Amount = amount,
+			Bank = bank,
+			CardOrPhone = cardOrPhone,
+			CreatedAt = DateTime.UtcNow,
+			IsCompleted = false
+		};
+
+		_context.PendingRequests.Add(pendingRequest);
+		await _context.SaveChangesAsync();
+
+		// Также сохраняем в сессии для отображения плашки
+		HttpContext.Session.SetString("PendingWithdrawal", amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+		HttpContext.Session.SetString("PendingWithdrawalBank", bank);
+		HttpContext.Session.SetString("PendingWithdrawalCardOrPhone", cardOrPhone);
+
+		return Json(new { success = true, message = "Заявка на вывод средств создана" });
 	}
 
 	// GET: /Account/Logout
 	public IActionResult Logout()
 	{
 		HttpContext.Session.Remove("User");
+		HttpContext.Session.Remove("PendingTopUp");
+		HttpContext.Session.Remove("PendingWithdrawal");
+		HttpContext.Session.Remove("PendingWithdrawalBank");
+		HttpContext.Session.Remove("PendingWithdrawalCardOrPhone");
 		return RedirectToAction("Login");
 	}
 }

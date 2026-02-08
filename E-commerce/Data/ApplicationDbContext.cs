@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
 
 	public DbSet<User> Users { get; set; }
 	public DbSet<Transaction> Transactions { get; set; }
+	public DbSet<PendingRequest> PendingRequests { get; set; }
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -26,13 +27,6 @@ public class ApplicationDbContext : DbContext
 		modelBuilder.Entity<User>()
 			.HasIndex(u => u.Email)
 			.IsUnique();
-
-		// Настройка BirthDate для сохранения как UTC
-		modelBuilder.Entity<User>()
-			.Property(u => u.BirthDate)
-			.HasConversion(
-				v => v.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : v.ToUniversalTime(),
-				v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
 		// Настройка автоинкремента для Transaction.Id
 		modelBuilder.Entity<Transaction>()
@@ -51,6 +45,25 @@ public class ApplicationDbContext : DbContext
 			.HasOne(t => t.User)
 			.WithMany(u => u.Transactions)
 			.HasForeignKey(t => t.UserId)
+			.OnDelete(DeleteBehavior.Cascade);
+
+		// Настройка автоинкремента для PendingRequest.Id
+		modelBuilder.Entity<PendingRequest>()
+			.Property(p => p.Id)
+			.ValueGeneratedOnAdd();
+
+		// Настройка CreatedAt для сохранения как UTC
+		modelBuilder.Entity<PendingRequest>()
+			.Property(p => p.CreatedAt)
+			.HasConversion(
+				v => v.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : v.ToUniversalTime(),
+				v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+		// Настройка связей для PendingRequest
+		modelBuilder.Entity<PendingRequest>()
+			.HasOne(p => p.User)
+			.WithMany()
+			.HasForeignKey(p => p.UserId)
 			.OnDelete(DeleteBehavior.Cascade);
 	}
 }

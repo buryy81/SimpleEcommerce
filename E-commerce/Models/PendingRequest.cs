@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace SimpleEcommerce.Models;
 
-public class Transaction
+public class PendingRequest
 {
 	[Key]
 	public int Id { get; set; }
@@ -17,20 +17,22 @@ public class Transaction
 	public User User { get; set; }
 
 	[Required]
-	[MaxLength(100)]
-	public string Type { get; set; } // "Пополнение" или "Покупка"
+	[MaxLength(50)]
+	public string Type { get; set; } // "TopUp" или "Withdrawal"
 
 	[Required]
+	[Column(TypeName = "decimal(18,2)")]
 	public decimal Amount { get; set; }
 
-	[MaxLength(500)]
-	public string Description { get; set; }
+	[MaxLength(200)]
+	public string? Bank { get; set; }
+
+	[MaxLength(100)]
+	public string? CardOrPhone { get; set; }
 
 	[Required]
 	public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-	public int? ProductId { get; set; }
-
-	[MaxLength(200)]
-	public string ProductName { get; set; }
+	[Required]
+	public bool IsCompleted { get; set; } = false;
 }
