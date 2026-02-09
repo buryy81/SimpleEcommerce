@@ -4,6 +4,8 @@
 @{
     ViewData["Title"] = "Личный кабинет";
     var transactions = ViewBag.Transactions as List<Transaction> ?? new List<Transaction>();
+    var activeWithdrawal = ViewBag.ActiveWithdrawal as PendingRequest;
+    var activeTopUp = ViewBag.ActiveTopUp as PendingRequest;
 }
 
 <div class="container mt-4">
@@ -15,18 +17,6 @@
         </div>
     }
     
-    @{
-        var pendingWithdrawalStr = Context.Session.GetString("PendingWithdrawal");
-        if (!string.IsNullOrEmpty(pendingWithdrawalStr) && decimal.TryParse(pendingWithdrawalStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var pendingWithdrawal))
-        {
-            <div class="alert alert-info alert-dismissible fade show" role="alert">
-                <i class="bi bi-hourglass-split me-2"></i>
-                <strong>Заявка на вывод в очереди</strong><br>
-                Ваша заявка на вывод средств в размере <strong>@pendingWithdrawal.ToString("N0") ₽</strong> обрабатывается. Ожидайте поступления средств.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
-    }
 
     <div class="row">
         <div class="col-lg-4 mb-4">
@@ -47,6 +37,10 @@
                             <div class="text-muted small mb-1">Баланс счета</div>
                             <div class="fw-bold text-dark" style="font-size: 1.5rem; letter-spacing: 0.5px;">
                                 @Model.Balance.ToString("N0") <span class="text-muted" style="font-size: 1rem;">₽</span>
+                                @if (activeWithdrawal != null)
+                                {
+                                    <span class="text-warning" style="font-size: 0.9rem;">(на вывод @activeWithdrawal.Amount.ToString("N0") ₽)</span>
+                                }
                             </div>
                         </div>
                     </div>
@@ -85,9 +79,54 @@
                             @foreach (var transaction in transactions)
                             {
                                 var isPositive = transaction.Amount > 0;
-                                var badgeClass = isPositive ? "bg-success" : "bg-danger";
-                                var iconClass = isPositive ? "bi-arrow-down-circle text-success" : "bi-arrow-up-circle text-danger";
-                                var iconBg = isPositive ? "bg-success bg-opacity-10" : "bg-danger bg-opacity-10";
+                                var isWithdrawal = transaction.Type == "Вывод средств";
+                                var isTopUp = transaction.Type == "Пополнение";
+                                
+                                // Проверяем статус транзакций
+                                var isWithdrawalPending = isWithdrawal && transaction.Description?.Contains("Заявка на вывод средств") == true;
+                                var isWithdrawalConfirmed = isWithdrawal && !isWithdrawalPending && transaction.Description?.Contains("Вывод средств") == true;
+                                var isTopUpPending = isTopUp && transaction.Description?.Contains("Заявка на пополнение баланса") == true;
+                                var isTopUpConfirmed = isTopUp && !isTopUpPending && (transaction.Description?.Contains("Пополнение счета") == true || transaction.Description?.Contains("подтверждена") == true || transaction.Description?.Contains("подтвержден") == true);
+                                
+                                // Определяем иконку и стили
+                                string iconClass;
+                                string iconBg;
+                                string badgeClass;
+                                
+                                if (isWithdrawalConfirmed || isTopUpConfirmed)
+                                {
+                                    // Заявка подтверждена - зеленая галочка
+                                    iconClass = "bi-check-circle text-success";
+                                    iconBg = "bg-success bg-opacity-10";
+                                    badgeClass = "bg-success";
+                                }
+                                else if (isWithdrawalPending && activeWithdrawal != null && Math.Abs(transaction.Amount) == activeWithdrawal.Amount)
+                                {
+                                    // Активная заявка на вывод - иконка таймера
+                                    iconClass = "bi-hourglass-split text-warning";
+                                    iconBg = "bg-warning bg-opacity-10";
+                                    badgeClass = "bg-warning";
+                                }
+                                else if (isTopUpPending && activeTopUp != null && transaction.Amount == activeTopUp.Amount)
+                                {
+                                    // Активная заявка на пополнение - иконка таймера
+                                    iconClass = "bi-hourglass-split text-warning";
+                                    iconBg = "bg-warning bg-opacity-10";
+                                    badgeClass = "bg-warning";
+                                }
+                                else if (isPositive)
+                                {
+                                    iconClass = "bi-arrow-down-circle text-success";
+                                    iconBg = "bg-success bg-opacity-10";
+                                    badgeClass = "bg-success";
+                                }
+                                else
+                                {
+                                    iconClass = "bi-arrow-up-circle text-danger";
+                                    iconBg = "bg-danger bg-opacity-10";
+                                    badgeClass = "bg-danger";
+                                }
+                                
                                 var amountDisplay = isPositive ? $"+{transaction.Amount:N0}" : $"{transaction.Amount:N0}";
                                 
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
@@ -128,15 +167,15 @@
                     <h5 class="modal-title" id="withdrawalModalLabel">Вывод средств</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="withdrawalForm" method="post" action="@Url.Action("RequestWithdrawal", "Account")">
+                <form id="withdrawalForm" method="post" action="#" onsubmit="return false;">
                     @Html.AntiForgeryToken()
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="withdrawalAmount" class="form-label fw-semibold">Сумма вывода (₽)</label>
                             <input type="number" class="form-control form-control-lg" 
                                    id="withdrawalAmount" name="amount" 
-                                   step="0.01" min="1" max="@Model.Balance" 
-                                   value="@(Model.Balance > 0 ? Model.Balance.ToString("F2") : "")" required>
+                                   step="0.01" min="1" max="@Model.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)" 
+                                   value="" required>
                             <small class="text-muted">Доступно для вывода: <strong>@Model.Balance.ToString("N0") ₽</strong></small>
                         </div>
 
@@ -164,7 +203,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                        <button type="submit" class="btn btn-primary" id="submitWithdrawalBtn">
+                        <button type="button" class="btn btn-primary" id="submitWithdrawalBtn">
                             <i class="bi bi-check-circle me-2"></i>Вывести средства
                         </button>
                     </div>
@@ -179,79 +218,173 @@
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('withdrawalForm');
             const submitBtn = document.getElementById('submitWithdrawalBtn');
+            const withdrawalModal = document.getElementById('withdrawalModal');
+            const withdrawalAmountInput = document.getElementById('withdrawalAmount');
             
-            if (form && submitBtn) {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const amount = parseFloat(document.getElementById('withdrawalAmount').value);
-                    const bank = document.getElementById('bankSelect').value;
-                    const cardOrPhone = document.getElementById('cardOrPhone').value;
-                    const maxAmount = @Model.Balance;
-                    
-                    if (isNaN(amount) || amount <= 0) {
-                        alert('Введите корректную сумму');
-                        return;
+            if (!form || !submitBtn) {
+                console.log('Форма или кнопка не найдены. Форма:', form, 'Кнопка:', submitBtn);
+                return;
+            }
+            
+            console.log('Инициализация формы вывода средств');
+            
+            // При открытии модального окна заполняем поле максимальной суммой
+            if (withdrawalModal && withdrawalAmountInput) {
+                const maxAmount = parseFloat('@Model.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)') || 0;
+                withdrawalModal.addEventListener('show.bs.modal', function() {
+                    if (maxAmount > 0) {
+                        // Используем точку как разделитель десятичных знаков
+                        const formattedValue = maxAmount.toFixed(2);
+                        withdrawalAmountInput.value = formattedValue;
+                        withdrawalAmountInput.max = maxAmount;
+                        // Принудительно устанавливаем значение с точкой
+                        setTimeout(function() {
+                            withdrawalAmountInput.value = formattedValue;
+                        }, 100);
+                    } else {
+                        withdrawalAmountInput.value = '';
                     }
-                    
-                    if (amount > maxAmount) {
-                        alert('Недостаточно средств на балансе');
-                        return;
+                });
+                
+                // Нормализуем значение при вводе (заменяем запятую на точку)
+                withdrawalAmountInput.addEventListener('input', function(e) {
+                    let value = e.target.value;
+                    // Заменяем запятую на точку
+                    if (value.includes(',')) {
+                        value = value.replace(',', '.');
+                        e.target.value = value;
                     }
-                    
-                    if (!bank) {
-                        alert('Выберите банк');
-                        return;
+                });
+                
+                // Нормализуем значение при потере фокуса
+                withdrawalAmountInput.addEventListener('blur', function(e) {
+                    let value = e.target.value;
+                    if (value.includes(',')) {
+                        value = value.replace(',', '.');
+                        e.target.value = value;
                     }
-                    
-                    if (!cardOrPhone.trim()) {
-                        alert('Введите номер карты или телефона');
-                        return;
-                    }
-                    
-                    // Отключаем кнопку
-                    submitBtn.disabled = true;
-                    const originalText = submitBtn.innerHTML;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Обработка...';
-                    
-                    const formData = new FormData(form);
-                    
-                    fetch(form.action, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-                        },
-                        body: new URLSearchParams(formData)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Закрываем модальное окно
-                            const withdrawalModal = document.getElementById('withdrawalModal');
-                            if (withdrawalModal && typeof bootstrap !== 'undefined') {
-                                const modalInstance = bootstrap.Modal.getInstance(withdrawalModal);
-                                if (modalInstance) {
-                                    modalInstance.hide();
-                                }
-                            }
-                            
-                            // Перезагружаем страницу
-                            window.location.href = '@Url.Action("Profile", "Account")';
-                        } else {
-                            alert(data.message || 'Произошла ошибка при создании заявки на вывод');
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = originalText;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Ошибка:', error);
-                        alert('Произошла ошибка при создании заявки на вывод');
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                    });
                 });
             }
+            
+            function handleWithdrawalSubmit() {
+                console.log('Начало обработки вывода средств');
+                const form = document.getElementById('withdrawalForm');
+                const submitBtn = document.getElementById('submitWithdrawalBtn');
+                
+                if (!form || !submitBtn) {
+                    console.error('Форма или кнопка не найдены в handleWithdrawalSubmit');
+                    return;
+                }
+                
+                // Получаем значение суммы, нормализуя его (заменяя запятую на точку)
+                let amountValue = document.getElementById('withdrawalAmount').value;
+                // Убираем все пробелы и заменяем запятую на точку
+                amountValue = amountValue.replace(/\s/g, '').replace(',', '.');
+                // Обновляем значение в поле, если оно было изменено
+                if (amountValue !== document.getElementById('withdrawalAmount').value) {
+                    document.getElementById('withdrawalAmount').value = amountValue;
+                }
+                const amount = parseFloat(amountValue);
+                const bank = document.getElementById('bankSelect').value;
+                const cardOrPhone = document.getElementById('cardOrPhone').value;
+                const maxAmount = parseFloat('@Model.Balance.ToString(System.Globalization.CultureInfo.InvariantCulture)') || 0;
+                
+                console.log('Парсинг суммы. Исходное значение:', document.getElementById('withdrawalAmount').value, 'Нормализованное:', amountValue, 'Результат parseFloat:', amount);
+                
+                if (isNaN(amount) || amount <= 0) {
+                    alert('Введите корректную сумму');
+                    return;
+                }
+                
+                if (amount > maxAmount) {
+                    alert('Недостаточно средств на балансе');
+                    return;
+                }
+                
+                if (!bank) {
+                    alert('Выберите банк');
+                    return;
+                }
+                
+                if (!cardOrPhone.trim()) {
+                    alert('Введите номер карты или телефона');
+                    return;
+                }
+                
+                // Отключаем кнопку
+                submitBtn.disabled = true;
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Обработка...';
+                
+                const formData = new FormData(form);
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                
+                // Формируем URL для запроса
+                const url = '@Url.Action("RequestWithdrawal", "Account")';
+                console.log('Отправка запроса на:', url);
+                
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: new URLSearchParams(formData)
+                })
+                .then(response => {
+                    // Проверяем, что ответ является JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Сервер вернул не JSON ответ');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Закрываем модальное окно
+                        const withdrawalModal = document.getElementById('withdrawalModal');
+                        if (withdrawalModal && typeof bootstrap !== 'undefined') {
+                            const modalInstance = bootstrap.Modal.getInstance(withdrawalModal);
+                            if (modalInstance) {
+                                modalInstance.hide();
+                            }
+                        }
+                        
+                        // Показываем сообщение об успехе
+                        alert(data.message || 'Заявка на вывод средств успешно создана');
+                        
+                        // Перезагружаем страницу
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Произошла ошибка при создании заявки на вывод');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при создании заявки на вывод. Пожалуйста, попробуйте еще раз.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
+            }
+            
+            // Обработчик на кнопке
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Клик по кнопке вывода средств');
+                handleWithdrawalSubmit();
+            });
+            
+            // Обработчик на форме (на случай если форма отправляется другим способом)
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Отправка формы вывода средств');
+                handleWithdrawalSubmit();
+                return false;
+            });
         });
     </script>
 }

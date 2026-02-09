@@ -9,10 +9,20 @@
         <h1 class="fw-bold">
             <i class="bi bi-shield-check text-primary me-2"></i>Админ-панель
         </h1>
-        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-2"></i>На главную
-        </a>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-danger" id="deleteAllTransactionsBtn">
+                <i class="bi bi-trash me-2"></i>Удалить все транзакции
+            </button>
+            <button type="button" class="btn btn-outline-warning" id="deleteAllPendingRequestsBtn">
+                <i class="bi bi-x-circle me-2"></i>Удалить все заявки
+            </button>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>На главную
+            </a>
+        </div>
     </div>
+
+    @Html.AntiForgeryToken()
 
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
@@ -48,12 +58,20 @@
                                 <th>Email</th>
                                 <th>Баланс</th>
                                 <th>Вывод</th>
+                                <th>Заявки</th>
                                 <th class="text-end">Действия</th>
                             </tr>
                         </thead>
                         <tbody>
+                            @{
+                                var userRequests = ViewBag.UserRequests as Dictionary<int, List<SimpleEcommerce.Models.PendingRequest>> ?? new Dictionary<int, List<SimpleEcommerce.Models.PendingRequest>>();
+                            }
                             @foreach (var user in Model)
                             {
+                                var userPendingRequests = userRequests.ContainsKey(user.Id) ? userRequests[user.Id] : new List<SimpleEcommerce.Models.PendingRequest>();
+                                var topUpRequests = userPendingRequests.Where(p => p.Type == "TopUp").ToList();
+                                var withdrawalRequests = userPendingRequests.Where(p => p.Type == "Withdrawal").ToList();
+                                
                                 <tr>
                                     <td class="fw-bold">@user.Id</td>
                                     <td>@user.FullName</td>
@@ -65,6 +83,54 @@
                                         <span class="badge @(user.WithdrawalEnabled ? "bg-success" : "bg-secondary")">
                                             @(user.WithdrawalEnabled ? "Разрешен" : "Запрещен")
                                         </span>
+                                    </td>
+                                    <td>
+                                        @if (topUpRequests.Any() || withdrawalRequests.Any())
+                                        {
+                                            <div class="d-flex flex-column gap-2">
+                                                @if (topUpRequests.Any())
+                                                {
+                                                    @foreach (var topUp in topUpRequests)
+                                                    {
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="badge bg-info" title="Заявка на пополнение">
+                                                                <i class="bi bi-arrow-down-circle me-1"></i>Пополнение: @topUp.Amount.ToString("N0") ₽
+                                                            </span>
+                                                            <button type="button" class="btn btn-sm btn-success quick-topup-btn" 
+                                                                    data-user-id="@user.Id" 
+                                                                    data-amount="@topUp.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                                    data-user-name="@user.FullName">
+                                                                <i class="bi bi-check-circle me-1"></i>Пополнить
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                }
+                                                @if (withdrawalRequests.Any())
+                                                {
+                                                    @foreach (var withdrawal in withdrawalRequests)
+                                                    {
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="badge bg-warning" title="Заявка на вывод: @withdrawal.Bank, @withdrawal.CardOrPhone">
+                                                                <i class="bi bi-arrow-up-circle me-1"></i>Вывод: @withdrawal.Amount.ToString("N0") ₽
+                                                            </span>
+                                                            <small class="text-muted">@withdrawal.Bank</small>
+                                                            <button type="button" class="btn btn-sm btn-danger quick-withdrawal-btn" 
+                                                                    data-user-id="@user.Id" 
+                                                                    data-amount="@withdrawal.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                                    data-user-name="@user.FullName"
+                                                                    data-bank="@withdrawal.Bank"
+                                                                    data-card="@withdrawal.CardOrPhone">
+                                                                <i class="bi bi-check-circle me-1"></i>Подтвердить
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Нет активных заявок</span>
+                                        }
                                     </td>
                                     <td class="text-end">
                                         <a href="@Url.Action("EditBalance", new { id = user.Id })" 
@@ -88,3 +154,215 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Удаление всех транзакций
+            const deleteAllTransactionsBtn = document.getElementById('deleteAllTransactionsBtn');
+            if (deleteAllTransactionsBtn) {
+                deleteAllTransactionsBtn.addEventListener('click', function() {
+                    if (!confirm('ВНИМАНИЕ! Вы уверены, что хотите удалить ВСЕ транзакции у ВСЕХ пользователей? Это действие нельзя отменить!')) {
+                        return;
+                    }
+                    
+                    if (!confirm('Это действие удалит всю историю транзакций. Продолжить?')) {
+                        return;
+                    }
+                    
+                    const originalText = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Удаление...';
+                    
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    const formData = new URLSearchParams();
+                    if (token) {
+                        formData.append('__RequestVerificationToken', token);
+                    }
+                    
+                    fetch('@Url.Action("DeleteAllTransactions", "Admin")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Произошла ошибка при удалении транзакций');
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при удалении транзакций');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    });
+                });
+            }
+            
+            // Удаление всех заявок
+            const deleteAllPendingRequestsBtn = document.getElementById('deleteAllPendingRequestsBtn');
+            if (deleteAllPendingRequestsBtn) {
+                deleteAllPendingRequestsBtn.addEventListener('click', function() {
+                    if (!confirm('ВНИМАНИЕ! Вы уверены, что хотите удалить ВСЕ заявки (на пополнение и вывод) у ВСЕХ пользователей? Это действие нельзя отменить!')) {
+                        return;
+                    }
+                    
+                    if (!confirm('Это действие удалит все активные заявки. Продолжить?')) {
+                        return;
+                    }
+                    
+                    const originalText = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Удаление...';
+                    
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    const formData = new URLSearchParams();
+                    if (token) {
+                        formData.append('__RequestVerificationToken', token);
+                    }
+                    
+                    fetch('@Url.Action("DeleteAllPendingRequests", "Admin")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Произошла ошибка при удалении заявок');
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при удалении заявок');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    });
+                });
+            }
+            
+            // Обработка быстрого пополнения баланса
+            document.querySelectorAll('.quick-topup-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const amount = parseFloat(this.getAttribute('data-amount'));
+                    const userName = this.getAttribute('data-user-name');
+                    
+                    if (!confirm(`Пополнить баланс пользователя ${userName} на ${amount.toLocaleString('ru-RU')} ₽?`)) {
+                        return;
+                    }
+                    
+                    const originalText = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Обработка...';
+                    
+                    // Получаем токен
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    
+                    const formData = new URLSearchParams();
+                    formData.append('userId', userId);
+                    formData.append('amount', amount.toString());
+                    if (token) {
+                        formData.append('__RequestVerificationToken', token);
+                    }
+                    
+                    fetch('@Url.Action("QuickTopUp", "Admin")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token || ''
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Произошла ошибка при пополнении баланса');
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при пополнении баланса');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    });
+                });
+            });
+            
+            // Обработка быстрого подтверждения вывода средств
+            document.querySelectorAll('.quick-withdrawal-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const amount = parseFloat(this.getAttribute('data-amount'));
+                    const userName = this.getAttribute('data-user-name');
+                    const bank = this.getAttribute('data-bank');
+                    const card = this.getAttribute('data-card');
+                    
+                    if (!confirm(`Подтвердить вывод средств пользователя ${userName} на сумму ${amount.toLocaleString('ru-RU')} ₽?\nБанк: ${bank}\nРеквизиты: ${card}`)) {
+                        return;
+                    }
+                    
+                    const originalText = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Обработка...';
+                    
+                    // Получаем токен
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    
+                    const formData = new URLSearchParams();
+                    formData.append('userId', userId);
+                    formData.append('amount', amount.toString());
+                    if (token) {
+                        formData.append('__RequestVerificationToken', token);
+                    }
+                    
+                    fetch('@Url.Action("QuickWithdrawal", "Admin")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token || ''
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Произошла ошибка при подтверждении вывода');
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при подтверждении вывода');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    });
+                });
+            });
+        });
+    </script>
+}

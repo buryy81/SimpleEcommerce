@@ -54,13 +54,34 @@ public class AccountController : Controller
 	// GET: /Account/Register
 	public IActionResult Register()
 	{
+		// Очищаем ModelState при GET запросе, чтобы не показывать ошибки при первой загрузке
+		ModelState.Clear();
+		return View();
+	}
+
+	// GET: /Account/Terms
+	public IActionResult Terms()
+	{
 		return View();
 	}
 
 	// POST: /Account/Register
 	[HttpPost]
-	public async Task<IActionResult> Register(User user)
+	public async Task<IActionResult> Register(User user, bool agreeTerms = false)
 	{
+		// Проверка согласия с офертой
+		// В ASP.NET Core, если чекбокс не отмечен, параметр может быть не передан вообще
+		var agreeTermsValue = Request.Form["agreeTerms"].ToString();
+		bool hasAgreed = agreeTerms || agreeTermsValue == "true" || agreeTermsValue == "on";
+		
+		if (!hasAgreed)
+		{
+			ModelState.AddModelError("agreeTerms", "Для продолжения регистрации необходимо принять условия пользовательского соглашения");
+			// Делаем ModelState невалидным, чтобы форма не прошла валидацию
+			ModelState.AddModelError("", "Пожалуйста, исправьте ошибки в форме");
+			return View(user);
+		}
+
 		if (ModelState.IsValid)
 		{
 			// Проверка на существование пользователя с таким email
@@ -117,6 +138,7 @@ public class AccountController : Controller
 			HttpContext.Session.SetString("PendingTopUp", activeTopUp.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
 		}
 
+		// Получаем активную заявку на вывод
 		var activeWithdrawal = await _context.PendingRequests
 			.FirstOrDefaultAsync(p => p.UserId == user.Id && p.Type == "Withdrawal" && !p.IsCompleted);
 		
@@ -140,6 +162,10 @@ public class AccountController : Controller
 		// Обновляем сессию с актуальными данными (без навигационных свойств)
 		HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, JsonOptions));
 
+		// Получаем активные заявки
+		activeTopUp = await _context.PendingRequests
+			.FirstOrDefaultAsync(p => p.UserId == user.Id && p.Type == "TopUp" && !p.IsCompleted);
+
 		// Получаем транзакции отсортированные по дате
 		var transactions = await _context.Transactions
 			.Where(t => t.UserId == user.Id)
@@ -147,6 +173,8 @@ public class AccountController : Controller
 			.ToListAsync();
 
 		ViewBag.Transactions = transactions;
+		ViewBag.ActiveWithdrawal = activeWithdrawal;
+		ViewBag.ActiveTopUp = activeTopUp;
 		return View(user);
 	}
 
@@ -175,6 +203,19 @@ public class AccountController : Controller
 		};
 
 		_context.PendingRequests.Add(pendingRequest);
+
+		// Создаем транзакцию для истории операций
+		var transaction = new Transaction
+		{
+			UserId = user.Id,
+			Type = "Пополнение",
+			Amount = amount,
+			Description = $"Заявка на пополнение баланса на сумму {amount:N0} ₽",
+			CreatedAt = DateTime.UtcNow,
+			ProductName = ""
+		};
+
+		_context.Transactions.Add(transaction);
 		await _context.SaveChangesAsync();
 
 		// Также сохраняем в сессии для отображения плашки
@@ -213,6 +254,9 @@ public class AccountController : Controller
 		if (amount <= 0 || amount > user.Balance)
 			return Json(new { success = false, message = "Неверная сумма для вывода" });
 
+		// Отнимаем сумму с баланса пользователя
+		user.Balance -= amount;
+
 		// Сохраняем информацию о заявке на вывод в БД
 		var pendingRequest = new PendingRequest
 		{
@@ -226,7 +270,23 @@ public class AccountController : Controller
 		};
 
 		_context.PendingRequests.Add(pendingRequest);
+
+		// Создаем транзакцию для истории операций
+		var transaction = new Transaction
+		{
+			UserId = user.Id,
+			Type = "Вывод средств",
+			Amount = -amount,
+			Description = $"Заявка на вывод средств на сумму {amount:N0} ₽: {bank}, {cardOrPhone}",
+			CreatedAt = DateTime.UtcNow,
+			ProductName = ""
+		};
+
+		_context.Transactions.Add(transaction);
 		await _context.SaveChangesAsync();
+
+		// Обновляем сессию с актуальными данными
+		HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, JsonOptions));
 
 		// Также сохраняем в сессии для отображения плашки
 		HttpContext.Session.SetString("PendingWithdrawal", amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));

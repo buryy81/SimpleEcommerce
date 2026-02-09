@@ -13,6 +13,53 @@
         </a>
     </div>
 
+    @{
+        var pendingTopUps = ViewBag.PendingTopUps as List<PendingRequest> ?? new List<PendingRequest>();
+        var pendingWithdrawals = ViewBag.PendingWithdrawals as List<PendingRequest> ?? new List<PendingRequest>();
+    }
+
+    @if (pendingTopUps.Any() || pendingWithdrawals.Any())
+    {
+        <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+            <h5 class="alert-heading">
+                <i class="bi bi-info-circle-fill me-2"></i>Активные заявки пользователя
+            </h5>
+            @if (pendingTopUps.Any())
+            {
+                <div class="mb-2">
+                    <strong>Заявки на пополнение:</strong>
+                    <ul class="mb-0">
+                        @foreach (var topUp in pendingTopUps)
+                        {
+                            <li>
+                                <span class="badge bg-info me-2">@topUp.Amount.ToString("N0") ₽</span>
+                                Создана: @topUp.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            @if (pendingWithdrawals.Any())
+            {
+                <div>
+                    <strong>Заявки на вывод:</strong>
+                    <ul class="mb-0">
+                        @foreach (var withdrawal in pendingWithdrawals)
+                        {
+                            <li>
+                                <span class="badge bg-warning me-2">@withdrawal.Amount.ToString("N0") ₽</span>
+                                Банк: <strong>@withdrawal.Bank</strong>, 
+                                Реквизиты: <strong>@withdrawal.CardOrPhone</strong><br>
+                                <small class="text-muted">Создана: @withdrawal.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div class="row">
         <div class="col-lg-5 mb-4">
             <div class="card shadow-sm border-0">
@@ -35,8 +82,18 @@
                         <p class="mb-0">@Model.Email</p>
                     </div>
                     <div class="mb-3">
-                        <label class="text-muted small">Текущий баланс</label>
-                        <p class="h4 fw-bold text-success mb-0">@Model.Balance.ToString("N0") ₽</p>
+                        <label class="text-muted small">Баланс</label>
+                        @{
+                            var fullBalance = ViewBag.FullBalance as decimal? ?? Model.Balance;
+                            var blockedAmount = ViewBag.BlockedAmount as decimal? ?? 0m;
+                        }
+                        <p class="h4 fw-bold text-success mb-0">@fullBalance.ToString("N0") ₽</p>
+                        @if (blockedAmount > 0)
+                        {
+                            <small class="text-muted">
+                                (текущий: @Model.Balance.ToString("N0") ₽, на вывод: @blockedAmount.ToString("N0") ₽)
+                            </small>
+                        }
                     </div>
                     <div class="mb-0">
                         <label class="text-muted small">Вывод средств</label>
@@ -76,8 +133,8 @@
                             <label for="newBalance" class="form-label fw-semibold">Новый баланс (₽)</label>
                             <input type="number" class="form-control form-control-lg" 
                                    id="newBalance" name="newBalance" step="0.01" min="0" 
-                                   value="@Model.Balance.ToString("F2")" required>
-                            <small class="text-muted">Текущий баланс: <strong>@Model.Balance.ToString("N0") ₽</strong></small>
+                                   value="@((ViewBag.FullBalance as decimal? ?? Model.Balance).ToString("F2"))" required>
+                            <small class="text-muted">Текущий баланс: <strong>@((ViewBag.FullBalance as decimal? ?? Model.Balance).ToString("N0")) ₽</strong></small>
                         </div>
 
                         <div class="mb-4">
@@ -263,7 +320,8 @@
                         console.log('Response data:', data);
                         if (data.success) {
                             alert(data.message);
-                            location.reload();
+                            // Перенаправляем на Index, чтобы обновить список и убрать обработанные заявки
+                            window.location.href = '@Url.Action("Index", "Admin")';
                         } else {
                             alert(data.message || 'Произошла ошибка');
                             updateBtn.disabled = false;
