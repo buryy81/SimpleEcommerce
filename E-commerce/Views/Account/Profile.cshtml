@@ -46,6 +46,11 @@
                     </div>
 
                     <div class="mt-4 d-grid gap-2">
+                        <button class="btn btn-success w-100" type="button" 
+                                data-bs-toggle="modal"
+                                data-bs-target="#topUpModal">
+                            <i class="bi bi-arrow-up-circle me-2"></i>Пополнить баланс
+                        </button>
                         <button class="btn btn-outline-primary w-100" type="button" 
                                 id="withdrawalBtn" 
                                 @(Model.WithdrawalEnabled ? "" : "disabled")
@@ -152,6 +157,71 @@
                         </div>
                     }
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно пополнения баланса -->
+<div class="modal fade" id="topUpModal" tabindex="-1" aria-labelledby="topUpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="topUpModalLabel">Пополнение баланса</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addFundsForm" method="post" action="@Url.Action("AddFunds", "Account")">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Сумма пополнения (₽):</label>
+                        <input type="number" class="form-control form-control-lg" name="amount" id="topUpAmountInput" min="100" step="100" value="1000" required>
+                        <small class="text-muted">Минимальная сумма: 100 ₽</small>
+                    </div>
+                
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="bi bi-credit-card me-2"></i>Реквизиты для перевода</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small">Номер карты</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control fw-bold" value="5536 9138 1234 5678" id="topUpCardNumber" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" id="copyTopUpCardBtn">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label text-muted small">Получатель</label>
+                                <p class="mb-0 fw-semibold">ИП Иванов Иван Иванович</p>
+                            </div>
+                            <div>
+                                <label class="form-label text-muted small">Назначение платежа</label>
+                                <p class="mb-0 text-muted small">Пополнение баланса</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <p class="mb-2 fw-semibold">Или отсканируйте QR-код</p>
+                        <div class="bg-light p-3 rounded d-inline-block">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=1000" alt="QR Code" class="img-fluid" style="max-width: 200px;" id="topUpQrCode">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        После перевода нажмите кнопку "Перевел" для подтверждения платежа
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmTopUpBtn">
+                    <i class="bi bi-check-circle me-2"></i>Перевел
+                </button>
             </div>
         </div>
     </div>
@@ -385,6 +455,100 @@
                 handleWithdrawalSubmit();
                 return false;
             });
+        });
+        
+        // Обработка пополнения баланса
+        document.addEventListener('DOMContentLoaded', function() {
+            const topUpModal = document.getElementById('topUpModal');
+            const topUpAmountInput = document.getElementById('topUpAmountInput');
+            const topUpQrCode = document.getElementById('topUpQrCode');
+            const copyTopUpCardBtn = document.getElementById('copyTopUpCardBtn');
+            const confirmTopUpBtn = document.getElementById('confirmTopUpBtn');
+            const addFundsForm = document.getElementById('addFundsForm');
+            
+            // Обновление QR-кода при изменении суммы
+            if (topUpModal && topUpAmountInput && topUpQrCode) {
+                topUpModal.addEventListener('show.bs.modal', function() {
+                    topUpAmountInput.value = '1000';
+                    updateTopUpQR();
+                });
+                
+                topUpAmountInput.addEventListener('input', function() {
+                    updateTopUpQR();
+                });
+                
+                function updateTopUpQR() {
+                    const amount = topUpAmountInput.value || '1000';
+                    topUpQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${amount}`;
+                }
+            }
+            
+            // Копирование номера карты
+            if (copyTopUpCardBtn) {
+                copyTopUpCardBtn.addEventListener('click', function() {
+                    const cardInput = document.getElementById('topUpCardNumber');
+                    if (cardInput) {
+                        cardInput.select();
+                        document.execCommand('copy');
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="bi bi-check"></i>';
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            }
+            
+            // Подтверждение пополнения
+            if (confirmTopUpBtn && addFundsForm) {
+                confirmTopUpBtn.addEventListener('click', function() {
+                    const amount = parseFloat(topUpAmountInput.value);
+                    
+                    if (!amount || amount < 100) {
+                        alert('Минимальная сумма пополнения: 100 ₽');
+                        return;
+                    }
+                    
+                    if (!confirm(`Подтвердите пополнение баланса на сумму ${amount.toLocaleString('ru-RU')} ₽?`)) {
+                        return;
+                    }
+                    
+                    const originalText = this.innerHTML;
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Обработка...';
+                    
+                    const formData = new FormData(addFundsForm);
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                    
+                    fetch(addFundsForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: new URLSearchParams(formData)
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Закрываем модальное окно
+                            const modal = bootstrap.Modal.getInstance(topUpModal);
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // Обновляем страницу
+                            location.reload();
+                        } else {
+                            throw new Error('Ошибка при пополнении баланса');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        alert('Произошла ошибка при пополнении баланса. Попробуйте еще раз.');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    });
+                });
+            }
         });
     </script>
 }
