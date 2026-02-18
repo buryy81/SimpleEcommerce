@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace SimpleEcommerce.Controllers
 {
+
+    // начальная
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;

@@ -10,6 +10,8 @@ using System.Linq;
 
 namespace SimpleEcommerce.Controllers;
 
+
+// работа с продуктами
 public class ProductController : Controller
 {
 	private readonly ApplicationDbContext _context;

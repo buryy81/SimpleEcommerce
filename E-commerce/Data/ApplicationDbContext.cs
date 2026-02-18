@@ -5,6 +5,8 @@ namespace SimpleEcommerce.Data;
 
 public class ApplicationDbContext : DbContext
 {
+
+	// связи между таблицами
 	public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
 		: base(options)
 	{

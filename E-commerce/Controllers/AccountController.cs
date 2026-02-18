@@ -7,6 +7,7 @@ using SimpleEcommerce.Models;
 
 namespace SimpleEcommerce.Controllers;
 
+// для пользователя контроллеры
 public class AccountController : Controller
 {
 	private readonly ApplicationDbContext _context;

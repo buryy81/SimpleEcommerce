@@ -7,6 +7,7 @@ using System;
 
 namespace SimpleEcommerce.Controllers;
 
+// имитация работы с реальными платежами для тестирования потенциального сайта и работы с настоящим балансом
 public class AdminController : Controller
 {
 	private readonly ApplicationDbContext _context;
