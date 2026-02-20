@@ -122,13 +122,13 @@ public class ProductController : Controller
 		{
 			// Улучшаем описание для страницы деталей
 			product.Description = product.Description + " Идеально подходит для повседневного использования. Гарантия качества и надежности.";
-			product.ImageUrl = product.ImageUrl.Replace("/400/300", "/600/600");
+			product.ImageUrl = product.ImageUrl?.Replace("/400/300", "/600/600");
 		}
 
 		// Проверяем баланс пользователя (пользователь уже авторизован)
 		var user = JsonSerializer.Deserialize<User>(userJson);
-		ViewBag.UserBalance = user.Balance;
-		ViewBag.HasEnoughBalance = user.Balance >= product.Price;
+		ViewBag.UserBalance = user?.Balance;
+		ViewBag.HasEnoughBalance = user?.Balance >= product.Price;
 
 		return View(product);
 	}
@@ -146,7 +146,7 @@ public class ProductController : Controller
 		}
 
 		var sessionUser = JsonSerializer.Deserialize<User>(userJson);
-		var user = await _context.Users.FindAsync(sessionUser.Id);
+		var user = await _context.Users.FindAsync(sessionUser?.Id);
 
 		if (user == null)
 			return Json(new { success = false, message = "Пользователь не найден" });

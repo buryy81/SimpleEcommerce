@@ -13,21 +13,22 @@ public class User
 	[Required]
 	[MaxLength(255)]
 	[EmailAddress]
-	public string Email { get; set; }
+	public string Email { get; set; } = null!;
 
 	[Required]
+	[MinLength(8)]
 	[MaxLength(255)]
-	public string Password { get; set; }
+	public string Password { get; set; } = null!;
 
-	[Required]
+    [Required]
 	[MaxLength(100)]
-	public string FirstName { get; set; }
+	public string FirstName { get; set; } = null!;
 
-	[Required]
+    [Required]
 	[MaxLength(100)]
-	public string LastName { get; set; }
+	public string LastName { get; set; } = null!;
 
-	[Required]
+    [Required]
 	[Column(TypeName = "decimal(18,2)")]
 	public decimal Balance { get; set; } = 0; // Начальный баланс
 

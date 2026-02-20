@@ -14,11 +14,11 @@ public class PendingRequest
 
 	[ForeignKey("UserId")]
 	[JsonIgnore]
-	public User User { get; set; }
+	public User User { get; set; } = null!;
 
 	[Required]
 	[MaxLength(50)]
-	public string Type { get; set; } // "TopUp" или "Withdrawal"
+	public string Type { get; set; } = null!; // "TopUp" или "Withdrawal"
 
 	[Required]
 	[Column(TypeName = "decimal(18,2)")]

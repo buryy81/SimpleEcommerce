@@ -189,8 +189,8 @@ public class AccountController : Controller
 			return RedirectToAction("Login");
 
 		var sessionUser = JsonSerializer.Deserialize<User>(userJson);
-		var user = await _context.Users.FindAsync(sessionUser.Id);
-		if (user == null)
+		var user = await _context.Users.FindAsync(sessionUser?.Id);
+		if (user == null)	
 			return RedirectToAction("Login");
 
 		// Сохраняем информацию о ожидающем пополнении в БД
@@ -244,7 +244,7 @@ public class AccountController : Controller
 			return Json(new { success = false, message = "Необходима авторизация" });
 
 		var sessionUser = JsonSerializer.Deserialize<User>(userJson);
-		var user = await _context.Users.FindAsync(sessionUser.Id);
+		var user = await _context.Users.FindAsync(sessionUser?.Id);
 
 		if (user == null)
 			return Json(new { success = false, message = "Пользователь не найден" });
