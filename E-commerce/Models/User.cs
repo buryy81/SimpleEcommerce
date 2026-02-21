@@ -10,6 +10,8 @@ public class User
 	[Key]
 	public int Id { get; set; }
 
+	public string? Ip { get; set; }
+
 	[Required]
 	[MaxLength(255)]
 	[EmailAddress]

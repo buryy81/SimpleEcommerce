@@ -96,6 +96,7 @@ public class AccountController : Controller
 			}
 
 			user.Balance = 0; // Начальный баланс
+			user.Ip = HttpContext.Connection.RemoteIpAddress?.ToString();
 
 			_context.Users.Add(user);
 			await _context.SaveChangesAsync();
