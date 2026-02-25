@@ -1,33 +1,23 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimpleEcommerce.Data;
 using SimpleEcommerce.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace SimpleEcommerce.Controllers;
 
-
-// работа с продуктами
-public class ProductController : Controller
+public class ProductController : BaseController
 {
-    private readonly ApplicationDbContext _context;
-    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
-    {
-        ReferenceHandler = ReferenceHandler.IgnoreCycles,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
+	private static readonly string[] StoreNames = { "TechStore", "Электроника Плюс", "Digital World", "TechMarket", "Гаджеты Онлайн", "SmartShop", "TechZone", "ЭлектронМаркет" };
 
-    public ProductController(ApplicationDbContext context)
-    {
-        _context = context;
-    }
-    private List<Product> GetAllProducts()
-    {
-        var storeNames = new[] { "TechStore", "Электроника Плюс", "Digital World", "TechMarket", "Гаджеты Онлайн", "SmartShop", "TechZone", "ЭлектронМаркет" };
+	private readonly ApplicationDbContext _context;
+
+	public ProductController(ApplicationDbContext context)
+	{
+		_context = context;
+	}
+
+	private static List<Product> GetAllProducts()
+	{
 
         return new List<Product>
         {
@@ -38,7 +28,7 @@ public class ProductController : Controller
                 Price = 80160,
                 Description = "Производительный ноутбук для работы и учебы. Экран 15.6 дюймов, процессор Intel Core i5, 8 ГБ ОЗУ, SSD 256 ГБ.",
                 ImageUrl = "https://main-cdn.sbermegamarket.ru/big2/hlr-system/-21/024/691/926/261/833/100068079612b4.png",
-                StoreName = storeNames[0]
+                StoreName = StoreNames[0]
             },
             new Product
             {
@@ -47,7 +37,7 @@ public class ProductController : Controller
                 Price = 35900,
                 Description = "Современный смартфон с отличной камерой и быстрой зарядкой. Экран 6.67 дюймов, 128 ГБ памяти.",
                 ImageUrl = "https://newton.by/upload/resize_cache/iblock/879/634_432_16c292005ec91514f5757ea1480bc3f98/2bb0r9m1dq7su2kfo70ca0puhudugpnj.jpg",
-                StoreName = storeNames[1]
+                StoreName = StoreNames[1]
             },
             new Product
             {
@@ -56,7 +46,7 @@ public class ProductController : Controller
                 Price = 32800,
                 Description = "Беспроводные наушники с активным шумоподавлением. Звук премиум-класса, до 30 часов работы.",
                 ImageUrl = "https://image.coolblue.de/600x315/products/1571055",
-                StoreName = storeNames[2]
+                StoreName = StoreNames[2]
             },
             new Product
             {
@@ -65,7 +55,7 @@ public class ProductController : Controller
                 Price = 8980,
                 Description = "Беспроводная клавиатура для работы. Подсветка клавиш, эргономичный дизайн, до 5 месяцев работы от батареи.",
                 ImageUrl = "https://avatars.mds.yandex.net/get-mpic/5274753/img_id7750242169756818863.jpeg/orig",
-                StoreName = storeNames[3]
+                StoreName = StoreNames[3]
             },
             new Product
             {
@@ -74,7 +64,7 @@ public class ProductController : Controller
                 Price = 80160,
                 Description = "Мощный планшет с дисплеем 10.9 дюймов. Чип M1, поддержка Apple Pencil, 256 ГБ памяти.",
                 ImageUrl = "https://cdn.dsmcdn.com/mnresize/620/920/ty374/product/media/images/20220326/10/76218015/423153747/3/3_org_zoom.jpg",
-                StoreName = storeNames[4]
+                StoreName = StoreNames[4]
             },
 
             // Блок 2: умные часы, периферия, мониторы
@@ -85,7 +75,7 @@ public class ProductController : Controller
                 Price = 46800,
                 Description = "Смарт-часы с GPS и функцией измерения здоровья. Дисплей Always-On, до 18 часов работы.",
                 ImageUrl = "https://at-store.ru/uploadedFiles/eshopimages/icons/570x570_cropped/3_358.jpg",
-                StoreName = storeNames[5]
+                StoreName = StoreNames[5]
             },
             new Product
             {
@@ -94,7 +84,7 @@ public class ProductController : Controller
                 Price = 8980,
                 Description = "Профессиональная игровая мышь с оптическим сенсором 30K DPI. Эргономичный дизайн для правшей.",
                 ImageUrl = "https://ixbt.online/gametech/sadm_images/2008/001_den/Razer_death/0IMG_8134.jpg",
-                StoreName = storeNames[6]
+                StoreName = StoreNames[6]
             },
             new Product
             {
@@ -103,7 +93,7 @@ public class ProductController : Controller
                 Price = 32800,
                 Description = "Игровой монитор 27 дюймов с изогнутым экраном. Разрешение QHD, частота 240 Гц, HDR600.",
                 ImageUrl = "https://c1.neweggimages.com/ProductImage/24-022-816-S10.jpg",
-                StoreName = storeNames[7]
+                StoreName = StoreNames[7]
             },
             new Product
             {
@@ -112,7 +102,7 @@ public class ProductController : Controller
                 Price = 6280,
                 Description = "HD веб-камера для видеозвонков. Разрешение 1080p, автофокус, стереозвук.",
                 ImageUrl = "https://cdn1.ozone.ru/s3/multimedia-4/c600/6352105960.jpg",
-                StoreName = storeNames[0]
+                StoreName = StoreNames[0]
             },
             new Product
             {
@@ -121,7 +111,7 @@ public class ProductController : Controller
                 Price = 6280,
                 Description = "Портативный жесткий диск USB 3.0. Объем 2 ТБ, компактный дизайн, высокая скорость передачи данных.",
                 ImageUrl = "https://diamondelectric.ru/images/4594/4593728/dlya_domashnih_pk_seagate_jestkii_disk_seagate_9vt166_2tb_5900_s_1.jpg",
-                StoreName = storeNames[1]
+                StoreName = StoreNames[1]
             },
 
             // Блок 3: аудио, сетевое оборудование, консоли
@@ -132,7 +122,7 @@ public class ProductController : Controller
                 Price = 16740,
                 Description = "Портативная колонка с мощным звуком. Водонепроницаемая, до 20 часов работы, функция Powerbank.",
                 ImageUrl = "https://cdn1.ozone.ru/s3/multimedia-1-m/c600/7023038026.jpg",
-                StoreName = storeNames[2]
+                StoreName = StoreNames[2]
             },
             new Product
             {
@@ -141,7 +131,7 @@ public class ProductController : Controller
                 Price = 8980,
                 Description = "Wi‑Fi 6 роутер с высокой скоростью. Двухдиапазонный, поддержка Mesh, родительский контроль.",
                 ImageUrl = "https://main-cdn.sbermegamarket.ru/big2/hlr-system/198/987/446/010/280/46/100058020766b3.png",
-                StoreName = storeNames[3]
+                StoreName = StoreNames[3]
             },
             new Product
             {
@@ -150,7 +140,7 @@ public class ProductController : Controller
                 Price = 46800,
                 Description = "Новейшая игровая консоль от Sony. SSD 825 ГБ, поддержка 4K и 120 FPS, обратная совместимость.",
                 ImageUrl = "https://cdn.dsmcdn.com/mnresize/620/920/ty1604/prod/QC/20241116/15/8ccf3073-8146-318b-882d-a2c830862fa2/1_org_zoom.jpg",
-                StoreName = storeNames[4]
+                StoreName = StoreNames[4]
             },
             new Product
             {
@@ -159,7 +149,7 @@ public class ProductController : Controller
                 Price = 16740,
                 Description = "Электронная книга с экраном E Ink 7.8 дюймов. Подсветка, водонепроницаемая, 16 ГБ памяти.",
                 ImageUrl = "https://main-cdn.sbermegamarket.ru/big2/hlr-system/-18/147/137/482/522/29/100062422066b7.png",
-                StoreName = storeNames[5]
+                StoreName = StoreNames[5]
             },
             new Product
             {
@@ -168,7 +158,7 @@ public class ProductController : Controller
                 Price = 2830,
                 Description = "Умный браслет для отслеживания активности. Мониторинг сна, пульса, 150+ режимов тренировок.",
                 ImageUrl = "https://www.miband.org/wp-content/uploads/2023/11/Xiaomi-Mi-Smart-Band-8-PRO-Global-English-NFC-GPS-Europe-version-PRODUCT-5.png",
-                StoreName = storeNames[6]
+                StoreName = StoreNames[6]
             },
             new Product 
             { 
@@ -177,7 +167,7 @@ public class ProductController : Controller
                 Price = 32800, 
                 Description = "Лазерный принтер для офиса. Печать до 42 стр/мин, двусторонняя печать, Wi-Fi.",
                 ImageUrl = "https://avatars.mds.yandex.net/i?id=e306030abd6a56047315bb2a833846e4_l-5235093-images-thumbs&n=13", 
-                StoreName = storeNames[7]
+                StoreName = StoreNames[7]
             },
             new Product 
             { 
@@ -186,7 +176,7 @@ public class ProductController : Controller
                 Price = 12990,
                 Description = "Механическая игровая клавиатура с RGB подсветкой. Переключатели Cherry MX, антипризрачный режим.",
                 ImageUrl = "https://c1.neweggimages.com/ProductImage/A24GD2301210EC37X64.jpg", 
-                StoreName = storeNames[0] 
+                StoreName = StoreNames[0] 
             },
             new Product
             {
@@ -195,7 +185,7 @@ public class ProductController : Controller
                 Price = 6280,
                 Description = "Быстрый SSD накопитель NVMe. Скорость чтения до 3500 МБ/с, идеален для игр и работы.", 
                 ImageUrl = "https://static.price.ru/images/models/802x802/ssd-disk/samsung-mz-v8p1t0bw/645d8b440d9c8fb9ddf164c177540463.JPEG", 
-                StoreName = storeNames[1] 
+                StoreName = StoreNames[1] 
             },
             new Product
             {
@@ -204,7 +194,7 @@ public class ProductController : Controller
                 Price = 8980, 
                 Description = "Мощный блок питания 80 Plus Gold. Модульная конструкция, тихая работа, надежность.", 
                 ImageUrl = "https://static.nix.ru/images/cooler-master-750---v2-4968462254.jpg?good_id=496846&width=draft&height=draft&view_id=2254", 
-                StoreName = storeNames[2] 
+                StoreName = StoreNames[2] 
             },
             new Product
             {
@@ -213,7 +203,7 @@ public class ProductController : Controller
                 Price = 46800, 
                 Description = "Игровая видеокарта с поддержкой DLSS 3.0. 8 ГБ видеопамяти, отличная производительность.", 
                 ImageUrl = "https://cdn.mos.cms.futurecdn.net/ATgKtkKr4PNv6j92UorCu9-650-80.jpg", 
-                StoreName = storeNames[3]
+                StoreName = StoreNames[3]
             },
             new Product
             { 
@@ -222,7 +212,7 @@ public class ProductController : Controller
                 Price = 16740,
                 Description = "Материнская плата для процессоров AMD. Поддержка PCIe 4.0, Wi-Fi 6, USB 3.2.",
                 ImageUrl = "https://cdn1.ozone.ru/s3/multimedia-x/c600/6226955481.jpg", 
-                StoreName = storeNames[4] 
+                StoreName = StoreNames[4] 
             },
             new Product
             {
@@ -231,7 +221,7 @@ public class ProductController : Controller
                 Price = 32800, 
                 Description = "Мощный процессор для игр и работы. 8 ядер, 16 потоков, базовая частота 3.8 ГГц.", 
                 ImageUrl = "https://newton.by/upload/resize_cache/iblock/133/650_650_16c292005ec91514f5757ea1480bc3f98/13318d059d17199d52fb7328ae4f08cd.jpg",
-                StoreName = storeNames[5]
+                StoreName = StoreNames[5]
             },
             new Product
             { 
@@ -240,7 +230,7 @@ public class ProductController : Controller
                 Price = 8980,
                 Description = "Оперативная память DDR4 3200 МГц. Объем 32 ГБ, двухканальный режим, низкая задержка.", 
                 ImageUrl = "https://cdn1.ozone.ru/s3/multimedia-1-h/c600/7210858733.jpg", 
-                StoreName = storeNames[6]
+                StoreName = StoreNames[6]
             },
             new Product
             {
@@ -249,7 +239,7 @@ public class ProductController : Controller
                 Price = 6280, 
                 Description = "Стильный корпус для ПК с прозрачной боковой панелью. Управление кабелями, хорошая вентиляция.", 
                 ImageUrl = "https://images10.newegg.com/ProductImageCompressAll1280/11-146-317-V01.jpg", 
-                StoreName = storeNames[7] 
+                StoreName = StoreNames[7] 
             },
             new Product 
             {
@@ -258,7 +248,7 @@ public class ProductController : Controller
                 Price = 6280, 
                 Description = "Мощный башенный кулер для процессора. Тихая работа, отличное охлаждение.", 
                 ImageUrl = "https://www.mypc.by/upload/iblock/08b/x2y8yuv3a1tw2mlig0u81w1dwbwq0f6r.jpeg", 
-                StoreName = storeNames[0] 
+                StoreName = StoreNames[0] 
             },
             new Product 
             {
@@ -267,7 +257,7 @@ public class ProductController : Controller
                 Price = 12990, 
                 Description = "USB микрофон для стриминга и записи. Несколько режимов записи, качественный звук.",
                 ImageUrl = "https://avatars.mds.yandex.net/get-mpic/11740777/2a0000018b010e5b109690c14d0ecf9b3bc0/orig", 
-                StoreName = storeNames[1]
+                StoreName = StoreNames[1]
             },
             new Product
             { 
@@ -276,7 +266,7 @@ public class ProductController : Controller
                 Price = 16740, 
                 Description = "Профессиональные наушники для мониторинга. Закрытый тип, точное звучание.", 
                 ImageUrl = "https://tehnozona.spb.ru/static/content/products/3979/main_catalog.jpg?1765814982", 
-                StoreName = storeNames[2] 
+                StoreName = StoreNames[2] 
             },
             new Product 
             {
@@ -285,7 +275,7 @@ public class ProductController : Controller
                 Price = 6280,
                 Description = "Графический планшет для дизайнеров. Чувствительность к нажатию, компактный размер.", 
                 ImageUrl = "https://i.ebayimg.com/images/g/588AAOSw4CFYow8v/s-l600.jpg", 
-                StoreName = storeNames[3] 
+                StoreName = StoreNames[3] 
             },
             new Product
             {
@@ -294,7 +284,7 @@ public class ProductController : Controller
                 Price = 46800, 
                 Description = "4K телевизор с Smart TV. Диагональ 55 дюймов, HDR10+, голосовое управление.", 
                 ImageUrl = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhmkMFWg_eZbf1Ns2r8tZ6wfnPV9D4bXRYaMOOfl0hLeuANOn8VEmxo6q3L7-8aoYhA-iwiDRcjZsg2damzO5zxQv7ztXEis-VjS7Gd3V2y_D64ihVRb-ult_grwEZfSgk2c6QiESVPrLHQ/s640/Samsung+65+SUHD+4K+Curved+TV.jpg", 
-                StoreName = storeNames[4] 
+                StoreName = StoreNames[4] 
             },
             new Product 
             { 
@@ -303,7 +293,7 @@ public class ProductController : Controller
                 Price = 1480, 
                 Description = "Большой игровой коврик для мыши. Точное позиционирование, долговечный материал.", 
                 ImageUrl = "https://cache3.youla.io/files/images/780_780/5e/48/5e480ac5226e48924c47d6f6.jpg", 
-                StoreName = storeNames[5]
+                StoreName = StoreNames[5]
             },
             new Product 
             { 
@@ -312,7 +302,7 @@ public class ProductController : Controller
                 Price = 12990, 
                 Description = "Профессиональная веб-камера для стриминга. Разрешение 1080p 60fps, HDR, кольцевая подсветка.",
                 ImageUrl = "https://unsplash.com/photos/9vP2tWTwsF4/download?force=true&w=640", 
-                StoreName = storeNames[6] 
+                StoreName = StoreNames[6] 
             },
             new Product
             { 
@@ -321,7 +311,7 @@ public class ProductController : Controller
                 Price = 32800,
                 Description = "Эргономичный игровой стул премиум класса. Регулировка высоты и наклона, качественные материалы.",
                 ImageUrl = "https://pic.rutubelist.ru/video/47/6c/476c7f453165fd956929f3d02491c73f.jpg", 
-                StoreName = storeNames[7] 
+                StoreName = StoreNames[7] 
             },
             new Product 
             {
@@ -330,7 +320,7 @@ public class ProductController : Controller
                 Price = 35900, 
                 Description = "Большой игровой стол с подставкой для мониторов. Управление кабелями, прочная конструкция.",
                 ImageUrl = "https://cdn.xcomweb.ru/upload/pictures/c97/wssq123ua8mmi88ljcejex3n6sqkmwzd/15+cGyEezttpC_600", 
-                StoreName = storeNames[0] 
+                StoreName = StoreNames[0] 
             },
             new Product
             {
@@ -339,7 +329,7 @@ public class ProductController : Controller
                 Price = 750, 
                 Description = "Быстрая беспроводная зарядка для смартфонов. Мощность 15W, компактный дизайн.",
                 ImageUrl = "https://c1.neweggimages.com/ProductImage/359-000V-005F6-V07.jpg", 
-                StoreName = storeNames[1]
+                StoreName = StoreNames[1]
             },
             new Product 
             {
@@ -348,7 +338,7 @@ public class ProductController : Controller
                 Price = 2830, 
                 Description = "Мощный внешний аккумулятор. Емкость 20000 мАч, быстрая зарядка, два USB порта.", 
                 ImageUrl = "https://static.baza.farpost.ru/v/1701574295824_bulletin",
-                StoreName = storeNames[2]
+                StoreName = StoreNames[2]
             },
             new Product 
             { 
@@ -357,7 +347,7 @@ public class ProductController : Controller
                 Price = 1480, 
                 Description = "Оригинальный кабель USB-C для зарядки. Длина 2 метра, быстрая передача данных.", 
                 ImageUrl = "https://static.baza.farpost.ru/v/1660745216011_bulletin",
-                StoreName = storeNames[3]
+                StoreName = StoreNames[3]
             },
             new Product 
             { 
@@ -366,7 +356,7 @@ public class ProductController : Controller
                 Price = 2830,
                 Description = "Защитный чехол с MagSafe. Прозрачный дизайн, защита от ударов, совместимость с беспроводной зарядкой.", 
                 ImageUrl = "https://i-cnt.ru/upload/iblock/1c0/bhgbfpda6gc9pi62frogh3rct9jm8r2g.jpg", 
-                StoreName = storeNames[4] 
+                StoreName = StoreNames[4] 
             },
             new Product 
             { 
@@ -375,7 +365,7 @@ public class ProductController : Controller
                 Price = 750, 
                 Description = "Закаленное защитное стекло 9H. Полное покрытие экрана, защита от царапин и ударов.",
                 ImageUrl = "https://inspector-gadgets.ru/thumb/2/5MaBrFqp2BTi_AifvSl4lA/600r600/d/a9291cb3927479580a26fed51b49a4f2jpg.webp", 
-                StoreName = storeNames[5]
+                StoreName = StoreNames[5]
             },
             new Product 
             {
@@ -384,7 +374,7 @@ public class ProductController : Controller
                 Price = 750,
                 Description = "Магнитный держатель для автомобиля. Универсальный крепеж, надежная фиксация.", 
                 ImageUrl = "https://baseus-shop.by/files/uploads/products/SUYL-F0G.jpg",
-                StoreName = storeNames[6]
+                StoreName = StoreNames[6]
             },
             new Product 
             {
@@ -393,118 +383,101 @@ public class ProductController : Controller
                 Price = 8990, 
                 Description = "Голосовой помощник с Алисой. Управление умным домом, музыка, новости и погода.",
                 ImageUrl = "https://apple-nova.ru/files/thumb/item/43262626.jpg?s=600,300,600,300", 
-                StoreName = storeNames[7]
+                StoreName = StoreNames[7]
             }
         };
     }
 
-    //GET: /Product/
-    public IActionResult Index(int page = 1)
-    {
-        var allProducts = GetAllProducts();
-        const int pageSize = 8;
+	public IActionResult Index(int page = 1)
+	{
+		var allProducts = GetAllProducts();
+		const int pageSize = 8;
 
-        var totalPages = (int)Math.Ceiling(allProducts.Count / (double)pageSize);
-        if (page < 1) page = 1;
-        if (page > totalPages) page = totalPages;
+		var totalPages = (int)Math.Ceiling(allProducts.Count / (double)pageSize);
+		if (page < 1) page = 1;
+		if (page > totalPages) page = totalPages;
 
-        var products = allProducts.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+		var products = allProducts.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = totalPages;
-        ViewBag.TotalProducts = allProducts.Count;
+		ViewBag.CurrentPage = page;
+		ViewBag.TotalPages = totalPages;
+		ViewBag.TotalProducts = allProducts.Count;
 
-        return View(products);
-    }
+		return View(products);
+	}
 
-    public IActionResult Details(int id)
-    {
-        // Проверка авторизации - если не авторизован, перенаправляем на вход
-        var userJson = HttpContext.Session.GetString("User");
-        if (string.IsNullOrEmpty(userJson))
-        {
-            return RedirectToAction("Login", "Account");
-        }
+	public IActionResult Details(int id)
+	{
+		var user = GetSessionUser();
+		if (user == null)
+			return RedirectToAction("Login", "Account");
 
-        var products = GetAllProducts();
-        var product = products.FirstOrDefault(p => p.Id == id);
+		var products = GetAllProducts();
+		var product = products.FirstOrDefault(p => p.Id == id);
 
-        if (product == null)
-        {
-            var storeNames = new[] { "TechStore", "Электроника Плюс", "Digital World", "TechMarket", "Гаджеты Онлайн", "SmartShop", "TechZone", "ЭлектронМаркет" };
-            product = new Product
-            {
-                Id = id,
-                Name = $"Товар {id}",
-                Price = 1000 * id,
-                Description = "Отличный товар для покупки",
-                ImageUrl = $"https://picsum.photos/600/600?random={id}",
-                StoreName = storeNames[id % storeNames.Length]
-            };
-        }
-        else
-        {
-            // Улучшаем описание для страницы деталей
-            product.Description = product.Description + " Идеально подходит для повседневного использования. Гарантия качества и надежности.";
-            product.ImageUrl = product.ImageUrl?.Replace("/400/300", "/600/600");
-        }
+		if (product == null)
+		{
+			product = new Product
+			{
+				Id = id,
+				Name = $"Товар {id}",
+				Price = 1000 * id,
+				Description = "Отличный товар для покупки",
+				ImageUrl = $"https://picsum.photos/600/600?random={id}",
+				StoreName = StoreNames[id % StoreNames.Length]
+			};
+		}
+		else
+		{
+			product.Description = product.Description + " Идеально подходит для повседневного использования. Гарантия качества и надежности.";
+			product.ImageUrl = product.ImageUrl?.Replace("/400/300", "/600/600");
+		}
 
-        // Проверяем баланс пользователя (пользователь уже авторизован)
-        var user = JsonSerializer.Deserialize<User>(userJson);
-        ViewBag.UserBalance = user?.Balance;
-        ViewBag.HasEnoughBalance = user?.Balance >= product.Price;
+		ViewBag.UserBalance = user.Balance;
+		ViewBag.HasEnoughBalance = user.Balance >= product.Price;
 
-        return View(product);
-    }
+		return View(product);
+	}
 
-    // POST: /Product/Purchase
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Purchase(int productId)
-    {
-        var userJson = HttpContext.Session.GetString("User");
-        if (string.IsNullOrEmpty(userJson))
-        {
-            // Перенаправляем на страницу входа
-            return Json(new { success = false, redirect = true, url = Url.Action("Login", "Account") });
-        }
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> Purchase(int productId)
+	{
+		var sessionUser = GetSessionUser();
+		if (sessionUser == null)
+			return Json(new { success = false, redirect = true, url = Url.Action("Login", "Account") });
 
-        var sessionUser = JsonSerializer.Deserialize<User>(userJson);
-        var user = await _context.Users.FindAsync(sessionUser?.Id);
+		var user = await _context.Users.FindAsync(sessionUser.Id);
+		if (user == null)
+			return Json(new { success = false, message = "Пользователь не найден" });
 
-        if (user == null)
-            return Json(new { success = false, message = "Пользователь не найден" });
+		var products = GetAllProducts();
+		var product = products.FirstOrDefault(p => p.Id == productId);
 
-        var products = GetAllProducts();
-        var product = products.FirstOrDefault(p => p.Id == productId);
+		if (product == null)
+			return Json(new { success = false, message = "Товар не найден" });
 
-        if (product == null)
-            return Json(new { success = false, message = "Товар не найден" });
+		if (user.Balance < product.Price)
+			return Json(new { success = false, message = "Недостаточно средств на балансе" });
 
-        if (user.Balance < product.Price)
-            return Json(new { success = false, message = "Недостаточно средств на балансе" });
+		user.Balance -= product.Price;
 
-        // Списываем деньги
-        user.Balance -= product.Price;
+		var transaction = new Transaction
+		{
+			UserId = user.Id,
+			Type = TransactionTypePurchase,
+			Amount = -product.Price,
+			Description = $"Покупка товара: {product.Name}",
+			ProductId = product.Id,
+			ProductName = product.Name,
+			CreatedAt = DateTime.UtcNow
+		};
 
-        // Создаем транзакцию
-        var transaction = new Transaction
-        {
-            UserId = user.Id,
-            Type = "Покупка",
-            Amount = -product.Price,
-            Description = $"Покупка товара: {product.Name}",
-            ProductId = product.Id,
-            ProductName = product.Name,
-            CreatedAt = DateTime.UtcNow
-        };
+		_context.Transactions.Add(transaction);
+		await _context.SaveChangesAsync();
 
-        _context.Transactions.Add(transaction);
-        await _context.SaveChangesAsync();
+		SaveUserToSession(user);
 
-        // Обновляем сессию (без навигационных свойств)
-        HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, JsonOptions));
-
-        return Json(new { success = true, message = $"Товар '{product.Name}' успешно куплен!", balance = user.Balance });
-    }
+		return Json(new { success = true, message = $"Товар '{product.Name}' успешно куплен!", balance = user.Balance });
+	}
 }

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8" />
@@ -49,9 +49,9 @@
                     <ul class="navbar-nav">
                         @{
                             var userJson = Context.Session.GetString("User");
-                            if (userJson != null)
+                            var user = userJson != null ? System.Text.Json.JsonSerializer.Deserialize<SimpleEcommerce.Models.User>(userJson) : null;
+                            if (user != null)
                             {
-                                var user = System.Text.Json.JsonSerializer.Deserialize<SimpleEcommerce.Models.User>(userJson);
                                 var pendingTopUpStr = Context.Session.GetString("PendingTopUp");
                                 decimal? pendingTopUp = null;
                                 if (!string.IsNullOrEmpty(pendingTopUpStr) && decimal.TryParse(pendingTopUpStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var pendingAmount))

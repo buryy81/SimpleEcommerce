@@ -2,34 +2,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimpleEcommerce.Data;
 using SimpleEcommerce.Models;
-using System.Text.Json;
-using System;
 
 namespace SimpleEcommerce.Controllers;
 
-// имитация работы с реальными платежами для тестирования потенциального сайта и работы с настоящим балансом
-public class AdminController : Controller
+public class AdminController : BaseController
 {
 	private readonly ApplicationDbContext _context;
-	private const string AdminEmail = "admin@admin.com"; // Email администратора
 
 	public AdminController(ApplicationDbContext context)
 	{
 		_context = context;
 	}
 
-	// Проверка, является ли текущий пользователь администратором
-	private bool IsAdmin()
+	private void UpdateSessionIfCurrentUser(int userId, User user)
 	{
-		var userJson = HttpContext.Session.GetString("User");
-		if (string.IsNullOrEmpty(userJson))
-			return false;
-
-		var user = JsonSerializer.Deserialize<User>(userJson);
-		return user?.Email == AdminEmail;
+		var sessionUser = GetSessionUser();
+		if (sessionUser?.Id == userId)
+			SaveUserToSession(user);
 	}
 
-	// GET: /Admin
 	public async Task<IActionResult> Index(string search = "")
 	{
 		if (!IsAdmin())
@@ -68,26 +59,22 @@ public class AdminController : Controller
 			.GroupBy(p => p.UserId)
 			.ToDictionary(g => g.Key, g => g.ToList());
 
-		// Получаем количество активных заявок на вывод
 		var pendingWithdrawalsCount = await _context.PendingRequests
-			.Where(p => p.Type == "Withdrawal" && !p.IsCompleted)
+			.Where(p => p.Type == RequestTypeWithdrawal && !p.IsCompleted)
 			.CountAsync();
 
-		// Получаем список активных заявок на вывод с информацией о пользователях
 		var pendingWithdrawals = await _context.PendingRequests
-			.Where(p => p.Type == "Withdrawal" && !p.IsCompleted)
+			.Where(p => p.Type == RequestTypeWithdrawal && !p.IsCompleted)
 			.Include(p => p.User)
 			.OrderByDescending(p => p.CreatedAt)
 			.ToListAsync();
 
-		// Получаем количество активных заявок на пополнение
 		var pendingTopUpsCount = await _context.PendingRequests
-			.Where(p => p.Type == "TopUp" && !p.IsCompleted)
+			.Where(p => p.Type == RequestTypeTopUp && !p.IsCompleted)
 			.CountAsync();
 
-		// Получаем список активных заявок на пополнение с информацией о пользователях
 		var pendingTopUps = await _context.PendingRequests
-			.Where(p => p.Type == "TopUp" && !p.IsCompleted)
+			.Where(p => p.Type == RequestTypeTopUp && !p.IsCompleted)
 			.Include(p => p.User)
 			.OrderByDescending(p => p.CreatedAt)
 			.ToListAsync();
@@ -101,7 +88,6 @@ public class AdminController : Controller
 		return View(users);
 	}
 
-	// GET: /Admin/EditBalance/{id}
 	public async Task<IActionResult> EditBalance(int id)
 	{
 		if (!IsAdmin())
@@ -127,8 +113,8 @@ public class AdminController : Controller
 			.OrderByDescending(p => p.CreatedAt)
 			.ToListAsync();
 
-		var pendingTopUps = pendingRequests.Where(p => p.Type == "TopUp").ToList();
-		var pendingWithdrawals = pendingRequests.Where(p => p.Type == "Withdrawal").ToList();
+		var pendingTopUps = pendingRequests.Where(p => p.Type == RequestTypeTopUp).ToList();
+		var pendingWithdrawals = pendingRequests.Where(p => p.Type == RequestTypeWithdrawal).ToList();
 		
 		// Вычисляем полный баланс (текущий + заблокированные на вывод)
 		var blockedAmount = pendingWithdrawals.Sum(w => w.Amount);
@@ -142,7 +128,6 @@ public class AdminController : Controller
 		return View(user);
 	}
 
-	// POST: /Admin/UpdateBalance
 	[HttpPost]
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> UpdateBalance(int userId, decimal newBalance, string reason = "")
@@ -159,9 +144,8 @@ public class AdminController : Controller
 			var oldBalance = user.Balance;
 			var balanceChange = newBalance - oldBalance;
 
-			// Получаем активные заявки на вывод для проверки
 			var activeWithdrawals = await _context.PendingRequests
-				.Where(p => p.UserId == userId && p.Type == "Withdrawal" && !p.IsCompleted)
+				.Where(p => p.UserId == userId && p.Type == RequestTypeWithdrawal && !p.IsCompleted)
 				.ToListAsync();
 			var totalWithdrawalAmount = activeWithdrawals.Sum(w => w.Amount);
 
@@ -190,142 +174,109 @@ public class AdminController : Controller
 					var existingTransaction = await _context.Transactions
 						.FirstOrDefaultAsync(t => t.UserId == userId 
 							&& t.Amount == -pendingWithdrawal.Amount 
-							&& t.Description.Contains("Заявка на вывод средств на сумму")
-							&& t.Type == "Вывод средств"
+							&& t.Description != null && t.Description.Contains("Заявка на вывод средств на сумму")
+							&& t.Type == TransactionTypeWithdrawal
 							&& t.CreatedAt >= pendingWithdrawal.CreatedAt.AddMinutes(-1)
 							&& t.CreatedAt <= pendingWithdrawal.CreatedAt.AddMinutes(1));
 					
 					if (existingTransaction != null)
-					{
-						// Обновляем описание транзакции
 						existingTransaction.Description = $"Вывод средств на сумму {pendingWithdrawal.Amount:N0} ₽: {pendingWithdrawal.Bank}, {pendingWithdrawal.CardOrPhone}";
-					}
 					else
-					{
-						// Если транзакцию не нашли, создаем новую
-						var confirmationTransaction = new Transaction
+						_context.Transactions.Add(new Transaction
 						{
 							UserId = userId,
-							Type = "Вывод средств",
+							Type = TransactionTypeWithdrawal,
 							Amount = -pendingWithdrawal.Amount,
 							Description = $"Вывод средств на сумму {pendingWithdrawal.Amount:N0} ₽: {pendingWithdrawal.Bank}, {pendingWithdrawal.CardOrPhone}",
 							CreatedAt = DateTime.UtcNow,
 							ProductName = ""
-						};
-						_context.Transactions.Add(confirmationTransaction);
-					}
+						});
 				}
 			}
-			
+
 			if (balanceChange > 0)
 			{
-				// Если баланс увеличился - закрываем заявки на пополнение
 				var pendingTopUps = await _context.PendingRequests
-					.Where(p => p.UserId == userId && p.Type == "TopUp" && !p.IsCompleted)
-					.ToListAsync();
-
-			foreach (var pendingTopUp in pendingTopUps)
-			{
-				// Закрываем заявку, если баланс увеличился (независимо от суммы)
-				pendingTopUp.IsCompleted = true;
-				topUpConfirmed = true;
-				
-				// Находим транзакцию о заявке и обновляем её описание
-				var existingTransaction = await _context.Transactions
-					.FirstOrDefaultAsync(t => t.UserId == userId 
-						&& t.Amount == pendingTopUp.Amount 
-						&& t.Description.Contains("Заявка на пополнение баланса на сумму")
-						&& t.Type == "Пополнение"
-						&& t.CreatedAt >= pendingTopUp.CreatedAt.AddMinutes(-1)
-						&& t.CreatedAt <= pendingTopUp.CreatedAt.AddMinutes(1));
-				
-				if (existingTransaction != null)
-				{
-					// Обновляем описание транзакции
-					existingTransaction.Description = $"Пополнение счета на сумму {pendingTopUp.Amount:N0} ₽";
-				}
-				else
-				{
-					// Если транзакцию не нашли, создаем новую
-					var confirmationTransaction = new Transaction
-					{
-						UserId = userId,
-						Type = "Пополнение",
-						Amount = pendingTopUp.Amount,
-						Description = $"Пополнение счета на сумму {pendingTopUp.Amount:N0} ₽",
-						CreatedAt = DateTime.UtcNow,
-						ProductName = ""
-					};
-					_context.Transactions.Add(confirmationTransaction);
-				}
-			}
-			}
-			
-			if (balanceChange < 0 && !withdrawalConfirmed)
-			{
-				// Если баланс уменьшился и заявки еще не закрыты - закрываем заявки на вывод И на пополнение
-				
-				// Закрываем заявки на пополнение (если баланс уменьшился, значит пополнение не прошло)
-				var pendingTopUps = await _context.PendingRequests
-					.Where(p => p.UserId == userId && p.Type == "TopUp" && !p.IsCompleted)
+					.Where(p => p.UserId == userId && p.Type == RequestTypeTopUp && !p.IsCompleted)
 					.ToListAsync();
 
 				foreach (var pendingTopUp in pendingTopUps)
 				{
 					pendingTopUp.IsCompleted = true;
+					topUpConfirmed = true;
+
+					var existingTransaction = await _context.Transactions
+						.FirstOrDefaultAsync(t => t.UserId == userId 
+							&& t.Amount == pendingTopUp.Amount 
+							&& t.Description != null && t.Description.Contains("Заявка на пополнение баланса на сумму")
+							&& t.Type == TransactionTypeTopUp
+							&& t.CreatedAt >= pendingTopUp.CreatedAt.AddMinutes(-1)
+							&& t.CreatedAt <= pendingTopUp.CreatedAt.AddMinutes(1));
+
+					if (existingTransaction != null)
+						existingTransaction.Description = $"Пополнение счета на сумму {pendingTopUp.Amount:N0} ₽";
+					else
+						_context.Transactions.Add(new Transaction
+						{
+							UserId = userId,
+							Type = TransactionTypeTopUp,
+							Amount = pendingTopUp.Amount,
+							Description = $"Пополнение счета на сумму {pendingTopUp.Amount:N0} ₽",
+							CreatedAt = DateTime.UtcNow,
+							ProductName = ""
+						});
 				}
-				
-				// Закрываем заявки на вывод (если они еще не были закрыты выше)
+			}
+
+			if (balanceChange < 0 && !withdrawalConfirmed)
+			{
+				var pendingTopUps = await _context.PendingRequests
+					.Where(p => p.UserId == userId && p.Type == RequestTypeTopUp && !p.IsCompleted)
+					.ToListAsync();
+
+				foreach (var pendingTopUp in pendingTopUps)
+					pendingTopUp.IsCompleted = true;
+
 				var pendingWithdrawals = await _context.PendingRequests
-					.Where(p => p.UserId == userId && p.Type == "Withdrawal" && !p.IsCompleted)
+					.Where(p => p.UserId == userId && p.Type == RequestTypeWithdrawal && !p.IsCompleted)
 					.ToListAsync();
 
 				foreach (var pendingWithdrawal in pendingWithdrawals)
 				{
-					// Закрываем заявку, если баланс уменьшился (независимо от суммы)
 					pendingWithdrawal.IsCompleted = true;
 					withdrawalConfirmed = true;
-					
-					// Находим транзакцию о заявке и обновляем её описание
+
 					var existingTransaction = await _context.Transactions
 						.FirstOrDefaultAsync(t => t.UserId == userId 
 							&& t.Amount == -pendingWithdrawal.Amount 
-							&& t.Description.Contains("Заявка на вывод средств на сумму")
-							&& t.Type == "Вывод средств"
+							&& t.Description != null && t.Description.Contains("Заявка на вывод средств на сумму")
+							&& t.Type == TransactionTypeWithdrawal
 							&& t.CreatedAt >= pendingWithdrawal.CreatedAt.AddMinutes(-1)
 							&& t.CreatedAt <= pendingWithdrawal.CreatedAt.AddMinutes(1));
-					
+
 					if (existingTransaction != null)
-					{
-						// Обновляем описание транзакции
 						existingTransaction.Description = $"Вывод средств на сумму {pendingWithdrawal.Amount:N0} ₽: {pendingWithdrawal.Bank}, {pendingWithdrawal.CardOrPhone}";
-					}
 					else
-					{
-						// Если транзакцию не нашли, создаем новую
-						var confirmationTransaction = new Transaction
+						_context.Transactions.Add(new Transaction
 						{
 							UserId = userId,
-							Type = "Вывод средств",
+							Type = TransactionTypeWithdrawal,
 							Amount = -pendingWithdrawal.Amount,
 							Description = $"Вывод средств на сумму {pendingWithdrawal.Amount:N0} ₽: {pendingWithdrawal.Bank}, {pendingWithdrawal.CardOrPhone}",
 							CreatedAt = DateTime.UtcNow,
 							ProductName = ""
-						};
-						_context.Transactions.Add(confirmationTransaction);
-					}
+						});
 				}
 			}
 
 			await _context.SaveChangesAsync();
 
-			// Создаем транзакцию для истории (только если это не подтверждение заявки)
 			if (!withdrawalConfirmed && !topUpConfirmed)
 			{
-				var transaction = new Transaction
+				_context.Transactions.Add(new Transaction
 				{
 					UserId = userId,
-					Type = balanceChange > 0 ? "Пополнение" : "Списание",
+					Type = balanceChange > 0 ? TransactionTypeTopUp : TransactionTypeDeduction,
 					Amount = balanceChange,
 					Description = balanceChange > 0 
 						? (string.IsNullOrEmpty(reason) 
@@ -336,25 +287,11 @@ public class AdminController : Controller
 							: $"Списание средств: {reason}"),
 					CreatedAt = DateTime.UtcNow,
 					ProductName = ""
-				};
-
-				_context.Transactions.Add(transaction);
+				});
 				await _context.SaveChangesAsync();
 			}
 
-		// Если это текущий пользователь, обновляем сессию
-		var userJson = HttpContext.Session.GetString("User");
-		if (!string.IsNullOrEmpty(userJson))
-		{
-			var sessionUser = JsonSerializer.Deserialize<User>(userJson);
-			if (sessionUser?.Id == userId)
-			{
-				HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, new JsonSerializerOptions
-				{
-					ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-				}));
-			}
-		}
+			UpdateSessionIfCurrentUser(userId, user);
 
 			return Json(new { success = true, message = $"Баланс успешно изменен с {oldBalance:N0} ₽ на {newBalance:N0} ₽" });
 		}
@@ -364,7 +301,6 @@ public class AdminController : Controller
 		}
 	}
 
-	// POST: /Admin/ToggleWithdrawal
 	[HttpPost]
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> ToggleWithdrawal(int userId)
@@ -381,19 +317,7 @@ public class AdminController : Controller
 			user.WithdrawalEnabled = !user.WithdrawalEnabled;
 			await _context.SaveChangesAsync();
 
-		// Если это текущий пользователь, обновляем сессию
-		var userJson = HttpContext.Session.GetString("User");
-		if (!string.IsNullOrEmpty(userJson))
-		{
-			var sessionUser = JsonSerializer.Deserialize<User>(userJson);
-			if (sessionUser?.Id == userId)
-			{
-				HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, new JsonSerializerOptions
-				{
-					ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-				}));
-			}
-		}
+			UpdateSessionIfCurrentUser(userId, user);
 
 			return Json(new { 
 				success = true, 
@@ -407,7 +331,6 @@ public class AdminController : Controller
 		}
 	}
 
-	// POST: /Admin/QuickTopUp - Быстрое пополнение баланса по заявке
 	[HttpPost]
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> QuickTopUp(int userId, decimal amount)
@@ -421,9 +344,8 @@ public class AdminController : Controller
 			if (user == null)
 				return Json(new { success = false, message = "Пользователь не найден" });
 
-			// Находим активную заявку на пополнение
 			var pendingTopUp = await _context.PendingRequests
-				.FirstOrDefaultAsync(p => p.UserId == userId && p.Type == "TopUp" && !p.IsCompleted && p.Amount == amount);
+				.FirstOrDefaultAsync(p => p.UserId == userId && p.Type == RequestTypeTopUp && !p.IsCompleted && p.Amount == amount);
 
 			if (pendingTopUp == null)
 				return Json(new { success = false, message = "Заявка на пополнение не найдена" });
@@ -434,53 +356,32 @@ public class AdminController : Controller
 			// Обновляем баланс
 			user.Balance = newBalance;
 
-			// Закрываем заявку
 			pendingTopUp.IsCompleted = true;
 
-			// Находим транзакцию о заявке и обновляем её описание
 			var existingTransaction = await _context.Transactions
 				.FirstOrDefaultAsync(t => t.UserId == userId 
 					&& t.Amount == amount 
-					&& t.Description.Contains("Заявка на пополнение баланса на сумму")
-					&& t.Type == "Пополнение"
+					&& t.Description != null && t.Description.Contains("Заявка на пополнение баланса на сумму")
+					&& t.Type == TransactionTypeTopUp
 					&& t.CreatedAt >= pendingTopUp.CreatedAt.AddMinutes(-1)
 					&& t.CreatedAt <= pendingTopUp.CreatedAt.AddMinutes(1));
-			
+
 			if (existingTransaction != null)
-			{
-				// Обновляем описание транзакции
 				existingTransaction.Description = $"Пополнение счета на сумму {amount:N0} ₽";
-			}
 			else
-			{
-				// Если транзакцию не нашли, создаем новую
-				var confirmationTransaction = new Transaction
+				_context.Transactions.Add(new Transaction
 				{
 					UserId = userId,
-					Type = "Пополнение",
+					Type = TransactionTypeTopUp,
 					Amount = amount,
 					Description = $"Пополнение счета на сумму {amount:N0} ₽",
 					CreatedAt = DateTime.UtcNow,
 					ProductName = ""
-				};
-				_context.Transactions.Add(confirmationTransaction);
-			}
-			
+				});
+
 			await _context.SaveChangesAsync();
 
-			// Если это текущий пользователь, обновляем сессию
-			var userJson = HttpContext.Session.GetString("User");
-			if (!string.IsNullOrEmpty(userJson))
-			{
-				var sessionUser = JsonSerializer.Deserialize<User>(userJson);
-				if (sessionUser?.Id == userId)
-				{
-					HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, new JsonSerializerOptions
-					{
-						ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-					}));
-				}
-			}
+			UpdateSessionIfCurrentUser(userId, user);
 
 			return Json(new { success = true, message = $"Баланс успешно пополнен на {amount:N0} ₽. Новый баланс: {newBalance:N0} ₽" });
 		}
@@ -490,7 +391,6 @@ public class AdminController : Controller
 		}
 	}
 
-	// POST: /Admin/QuickWithdrawal - Быстрое подтверждение вывода средств по заявке
 	[HttpPost]
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> QuickWithdrawal(int userId, decimal amount)
@@ -504,61 +404,38 @@ public class AdminController : Controller
 			if (user == null)
 				return Json(new { success = false, message = "Пользователь не найден" });
 
-			// Находим активную заявку на вывод
 			var pendingWithdrawal = await _context.PendingRequests
-				.FirstOrDefaultAsync(p => p.UserId == userId && p.Type == "Withdrawal" && !p.IsCompleted && p.Amount == amount);
+				.FirstOrDefaultAsync(p => p.UserId == userId && p.Type == RequestTypeWithdrawal && !p.IsCompleted && p.Amount == amount);
 
 			if (pendingWithdrawal == null)
 				return Json(new { success = false, message = "Заявка на вывод не найдена" });
 
-			// Баланс уже уменьшен при создании заявки, поэтому просто закрываем заявку
-			// Закрываем заявку
 			pendingWithdrawal.IsCompleted = true;
 
-			// Находим транзакцию о заявке и обновляем её описание
 			var existingTransaction = await _context.Transactions
 				.FirstOrDefaultAsync(t => t.UserId == userId 
 					&& t.Amount == -amount 
-					&& t.Description.Contains("Заявка на вывод средств на сумму")
-					&& t.Type == "Вывод средств"
+					&& t.Description != null && t.Description.Contains("Заявка на вывод средств на сумму")
+					&& t.Type == TransactionTypeWithdrawal
 					&& t.CreatedAt >= pendingWithdrawal.CreatedAt.AddMinutes(-1)
 					&& t.CreatedAt <= pendingWithdrawal.CreatedAt.AddMinutes(1));
-			
+
 			if (existingTransaction != null)
-			{
-				// Обновляем описание транзакции
 				existingTransaction.Description = $"Вывод средств на сумму {amount:N0} ₽: {pendingWithdrawal.Bank}, {pendingWithdrawal.CardOrPhone}";
-			}
 			else
-			{
-				// Если транзакцию не нашли, создаем новую
-				var confirmationTransaction = new Transaction
+				_context.Transactions.Add(new Transaction
 				{
 					UserId = userId,
-					Type = "Вывод средств",
+					Type = TransactionTypeWithdrawal,
 					Amount = -amount,
 					Description = $"Вывод средств на сумму {amount:N0} ₽: {pendingWithdrawal.Bank}, {pendingWithdrawal.CardOrPhone}",
 					CreatedAt = DateTime.UtcNow,
 					ProductName = ""
-				};
-				_context.Transactions.Add(confirmationTransaction);
-			}
-			
+				});
+
 			await _context.SaveChangesAsync();
 
-			// Если это текущий пользователь, обновляем сессию
-			var userJson = HttpContext.Session.GetString("User");
-			if (!string.IsNullOrEmpty(userJson))
-			{
-				var sessionUser = JsonSerializer.Deserialize<User>(userJson);
-				if (sessionUser?.Id == userId)
-				{
-					HttpContext.Session.SetString("User", JsonSerializer.Serialize(user, new JsonSerializerOptions
-					{
-						ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-					}));
-				}
-			}
+			UpdateSessionIfCurrentUser(userId, user);
 
 			return Json(new { success = true, message = $"Вывод средств на сумму {amount:N0} ₽ подтвержден. Баланс: {user.Balance:N0} ₽" });
 		}
@@ -568,7 +445,6 @@ public class AdminController : Controller
 		}
 	}
 
-	// POST: /Admin/DeleteAllTransactions - Удаление всех транзакций
 	[HttpPost]
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> DeleteAllTransactions()
@@ -590,7 +466,6 @@ public class AdminController : Controller
 		}
 	}
 
-	// POST: /Admin/DeleteAllPendingRequests - Удаление всех заявок
 	[HttpPost]
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> DeleteAllPendingRequests()
