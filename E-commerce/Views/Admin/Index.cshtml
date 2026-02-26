@@ -16,6 +16,9 @@
             <button type="button" class="btn btn-outline-warning" id="deleteAllPendingRequestsBtn">
                 <i class="bi bi-x-circle me-2"></i>Удалить все заявки
             </button>
+            <a href="@Url.Action("BlockedIps")" class="btn btn-outline-danger">
+                <i class="bi bi-ban me-2"></i>Заблокированные IP
+            </a>
             <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>На главную
             </a>
@@ -23,6 +26,21 @@
     </div>
 
     @Html.AntiForgeryToken()
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
@@ -56,6 +74,8 @@
                                 <th>ID</th>
                                 <th>Имя</th>
                                 <th>Email</th>
+                                <th>IP</th>
+                                <th>Уровень</th>
                                 <th>Баланс</th>
                                 <th>Вывод</th>
                                 <th>Заявки</th>
@@ -76,6 +96,29 @@
                                     <td class="fw-bold">@user.Id</td>
                                     <td>@user.FullName</td>
                                     <td>@user.Email</td>
+                                    <td>
+                                        <span class="text-muted small">@(user.Ip ?? "—")</span>
+                                        @if (!string.IsNullOrWhiteSpace(user.Ip))
+                                        {
+                                            <form method="post" action="@Url.Action("AddBlockedIp")" class="d-inline ms-1" onsubmit="return confirm('Заблокировать доступ с IP @user.Ip?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="ip" value="@user.Ip">
+                                                <input type="hidden" name="comment" value="Пользователь #@user.Id (@user.FullName)">
+                                                <input type="hidden" name="returnUrl" value="@Url.Action("Index")">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1" title="Заблокировать этот IP">
+                                                    <i class="bi bi-ban"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                    <td>
+                                        @{
+                                            var levelTooltip = user.Level == 0
+                                                ? "Уровень 0: доступен заработок за добавление объявлений в избранное."
+                                                : "Уровень 1: добавление в избранное + выкуп товаров 1 и 2 ранга.";
+                                        }
+                                        <span class="badge bg-info" title="@levelTooltip">@user.Level</span>
+                                    </td>
                                     <td>
                                         <span class="badge bg-success fs-6">@user.Balance.ToString("N0") ₽</span>
                                     </td>
@@ -133,10 +176,16 @@
                                         }
                                     </td>
                                     <td class="text-end">
-                                        <a href="@Url.Action("EditBalance", new { id = user.Id })" 
-                                           class="btn btn-sm btn-primary">
-                                            <i class="bi bi-pencil me-1"></i>Изменить баланс
-                                        </a>
+                                        <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                            <a href="@Url.Action("EditLevel", new { id = user.Id })" 
+                                               class="btn btn-sm btn-outline-info">
+                                                <i class="bi bi-star me-1"></i>Уровень
+                                            </a>
+                                            <a href="@Url.Action("EditBalance", new { id = user.Id })" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="bi bi-pencil me-1"></i>Баланс
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             }

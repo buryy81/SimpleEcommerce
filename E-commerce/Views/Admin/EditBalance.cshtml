@@ -74,8 +74,21 @@
                         <p class="fw-bold mb-0">@Model.Id</p>
                     </div>
                     <div class="mb-3">
-                        <label class="text-muted small">Ip</label>
-                        <p class="fw-bold mb-0">@Model.Ip</p>
+                        <label class="text-muted small">IP при регистрации</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <p class="fw-bold mb-0">@(Model.Ip ?? "—")</p>
+                            @if (!string.IsNullOrWhiteSpace(Model.Ip))
+                            {
+                                <form method="post" action="@Url.Action("AddBlockedIp", "Admin")" class="d-inline" onsubmit="return confirm('Заблокировать доступ к сайту с IP @Model.Ip? Пользователи с этого IP не смогут заходить на сайт.');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="ip" value="@Model.Ip">
+                                    <input type="hidden" name="comment" value="IP пользователя #@Model.Id (@Model.FullName)">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-ban me-1"></i>Заблокировать этот IP
+                                    </button>
+                                </form>
+                            }
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="text-muted small">Имя</label>

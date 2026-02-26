@@ -128,6 +128,102 @@ public class AdminController : BaseController
 		return View(user);
 	}
 
+	public async Task<IActionResult> BlockedIps()
+	{
+		if (!IsAdmin())
+			return RedirectToAction("Login", "Account");
+
+		var list = await _context.BlockedIps.OrderByDescending(b => b.CreatedAt).ToListAsync();
+		return View(list);
+	}
+
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> AddBlockedIp(string ip, string? comment = null, string? returnUrl = null)
+	{
+		if (!IsAdmin())
+			return RedirectToAction("Login", "Account");
+
+		ip = (ip ?? "").Trim();
+		if (string.IsNullOrEmpty(ip))
+		{
+			TempData["ErrorMessage"] = "Укажите IP-адрес";
+			return Redirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Action("BlockedIps")!);
+		}
+
+		if (await _context.BlockedIps.AnyAsync(b => b.Ip == ip))
+		{
+			TempData["ErrorMessage"] = "Этот IP уже заблокирован";
+			return Redirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Action("BlockedIps")!);
+		}
+
+		_context.BlockedIps.Add(new BlockedIp { Ip = ip, Comment = comment?.Trim() });
+		await _context.SaveChangesAsync();
+		TempData["SuccessMessage"] = $"IP {ip} заблокирован";
+		return Redirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Action("BlockedIps")!);
+	}
+
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> RemoveBlockedIp(int id)
+	{
+		if (!IsAdmin())
+			return RedirectToAction("Login", "Account");
+
+		var blocked = await _context.BlockedIps.FindAsync(id);
+		if (blocked != null)
+		{
+			_context.BlockedIps.Remove(blocked);
+			await _context.SaveChangesAsync();
+			TempData["SuccessMessage"] = $"IP {blocked.Ip} разблокирован";
+		}
+		return RedirectToAction("BlockedIps");
+	}
+
+	public async Task<IActionResult> EditLevel(int id)
+	{
+		if (!IsAdmin())
+			return RedirectToAction("Login", "Account");
+
+		var user = await _context.Users.FindAsync(id);
+		if (user == null)
+		{
+			TempData["ErrorMessage"] = "Пользователь не найден";
+			return RedirectToAction("Index");
+		}
+		return View(user);
+	}
+
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> UpdateLevel(int userId, int level)
+	{
+		try
+		{
+			if (!IsAdmin())
+				return Json(new { success = false, message = "Доступ запрещен" });
+
+			var user = await _context.Users.FindAsync(userId);
+			if (user == null)
+				return Json(new { success = false, message = "Пользователь не найден" });
+
+			if (level < 0)
+				return Json(new { success = false, message = "Уровень не может быть отрицательным" });
+
+			var oldLevel = user.Level;
+			user.Level = level;
+			await _context.SaveChangesAsync();
+
+			UpdateSessionIfCurrentUser(userId, user);
+
+			return Json(new { success = true, message = $"Уровень изменен с {oldLevel} на {level}" });
+		}
+		catch (Exception ex)
+		{
+			return Json(new { success = false, message = $"Ошибка: {ex.Message}" });
+		}
+	}
+
 	[HttpPost]
 	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> UpdateBalance(int userId, decimal newBalance, string reason = "")

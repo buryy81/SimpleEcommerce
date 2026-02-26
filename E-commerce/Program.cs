@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SimpleEcommerce.Data;
+using SimpleEcommerce.Middleware;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,6 +65,7 @@ app.UseRouting();
 
 app.UseAuthorization();
 app.UseSession();
+app.UseMiddleware<BlockedIpMiddleware>();
 
 app.MapControllerRoute(
     name: "default",

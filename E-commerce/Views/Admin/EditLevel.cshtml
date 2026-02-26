@@ -1,0 +1,101 @@
+@model SimpleEcommerce.Models.User
+
+@{
+    ViewData["Title"] = $"Уровень пользователя - {Model.FullName}";
+}
+
+<div class="container mt-4">
+    <div class="mb-4">
+        <a href="@Url.Action("Index")" class="text-decoration-none">
+            <i class="bi bi-arrow-left me-2"></i>Вернуться к списку пользователей
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-star me-2"></i>Изменение уровня пользователя
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">Пользователь</label>
+                        <p class="fw-bold mb-0">@Model.FullName (ID: @Model.Id)</p>
+                        <p class="text-muted small mb-0">@Model.Email</p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="levelInput" class="form-label fw-semibold">Уровень</label>
+                        <input type="number" class="form-control form-control-lg" id="levelInput" 
+                               min="0" max="1" value="@Model.Level" required>
+                        <small class="text-muted">Текущий уровень: <strong>@Model.Level</strong></small>
+                        <div class="mt-2 small text-muted">
+                            <strong>Уровень 0:</strong> заработок за добавление объявлений в избранное.<br>
+                            <strong>Уровень 1:</strong> избранное + выкуп товаров 1 и 2 ранга.
+                        </div>
+                    </div>
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-info w-100" id="saveLevelBtn">
+                        <i class="bi bi-check-circle me-2"></i>Сохранить уровень
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const saveBtn = document.getElementById('saveLevelBtn');
+            const levelInput = document.getElementById('levelInput');
+            
+            saveBtn.addEventListener('click', function() {
+                const level = parseInt(levelInput.value, 10);
+                if (isNaN(level) || level < 0) {
+                    alert('Введите неотрицательное число');
+                    return;
+                }
+                
+                if (!confirm('Установить уровень ' + level + ' для пользователя @Model.FullName?')) {
+                    return;
+                }
+                
+                const originalText = saveBtn.innerHTML;
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Сохранение...';
+                
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                const formData = new URLSearchParams();
+                formData.append('userId', '@Model.Id');
+                formData.append('level', level.toString());
+                if (token) formData.append('__RequestVerificationToken', token);
+                
+                fetch('@Url.Action("UpdateLevel", "Admin")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        levelInput.value = level;
+                        window.location.href = '@Url.Action("Index")';
+                    } else {
+                        alert(data.message || 'Ошибка при сохранении');
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalText;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Произошла ошибка');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalText;
+                });
+            });
+        });
+    </script>
+}

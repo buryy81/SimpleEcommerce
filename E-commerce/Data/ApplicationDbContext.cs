@@ -15,6 +15,8 @@ public class ApplicationDbContext : DbContext
 	public DbSet<User> Users { get; set; }
 	public DbSet<Transaction> Transactions { get; set; }
 	public DbSet<PendingRequest> PendingRequests { get; set; }
+	public DbSet<UserFavorite> UserFavorites { get; set; }
+	public DbSet<BlockedIp> BlockedIps { get; set; }
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -67,5 +69,25 @@ public class ApplicationDbContext : DbContext
 			.WithMany()
 			.HasForeignKey(p => p.UserId)
 			.OnDelete(DeleteBehavior.Cascade);
+
+		modelBuilder.Entity<UserFavorite>()
+			.HasIndex(f => new { f.UserId, f.ProductId })
+			.IsUnique();
+
+		modelBuilder.Entity<UserFavorite>()
+			.HasOne(f => f.User)
+			.WithMany()
+			.HasForeignKey(f => f.UserId)
+			.OnDelete(DeleteBehavior.Cascade);
+
+		modelBuilder.Entity<BlockedIp>()
+			.HasIndex(b => b.Ip)
+			.IsUnique();
+
+		modelBuilder.Entity<BlockedIp>()
+			.Property(b => b.CreatedAt)
+			.HasConversion(
+				v => v.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : v.ToUniversalTime(),
+				v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 	}
 }

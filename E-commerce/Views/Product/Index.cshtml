@@ -1,10 +1,11 @@
-﻿@model List<SimpleEcommerce.Models.Product>
+@model List<SimpleEcommerce.Models.Product>
 
 @{
     ViewData["Title"] = "Каталог товаров - AiMarket";
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     int totalProducts = ViewBag.TotalProducts ?? 0;
+    var favoriteIds = ViewBag.FavoriteIds as List<int> ?? new List<int>();
 }
 
 <div class="container mt-4">
@@ -21,8 +22,11 @@
                     <div class="product-image-wrapper position-relative overflow-hidden">
                         <img src="@product.ImageUrl" class="card-img-top product-image" alt="@product.Name" style="height: 250px; object-fit: cover;">
                         <div class="position-absolute top-0 end-0 m-2">
-                            <button class="btn btn-sm btn-light rounded-circle p-2 favorite-btn" title="В избранное" data-product-id="@product.Id">
-                                <i class="bi bi-heart"></i>
+                            @{
+                                var isFav = favoriteIds.Contains(product.Id);
+                            }
+                            <button class="btn btn-sm rounded-circle p-2 favorite-btn @(isFav ? "btn-primary active" : "btn-light")" title="@(isFav ? "Удалить из избранного" : "В избранное")" data-product-id="@product.Id">
+                                <i class="bi @(isFav ? "bi-heart-fill" : "bi-heart")"></i>
                             </button>
                         </div>
                     </div>
@@ -129,28 +133,43 @@
         document.addEventListener('DOMContentLoaded', function() {
             'use strict';
             
-            // Кнопки избранного на карточках товаров
+            // Кнопки избранного на карточках товаров — запрос к серверу и обновление вида
             const favoriteButtons = document.querySelectorAll('.favorite-btn');
             favoriteButtons.forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    
-                    const icon = this.querySelector('i');
+                    var productId = parseInt(this.getAttribute('data-product-id'), 10);
+                    if (!productId) return;
+                    var icon = this.querySelector('i');
                     if (!icon) return;
-                    
-                    if (this.classList.contains('active')) {
-                        this.classList.remove('active', 'btn-primary');
-                        this.classList.add('btn-light');
-                        icon.classList.remove('bi-heart-fill');
-                        icon.classList.add('bi-heart');
-                    } else {
-                        this.classList.add('active');
-                        this.classList.remove('btn-light');
-                        this.classList.add('btn-primary');
-                        icon.classList.remove('bi-heart');
-                        icon.classList.add('bi-heart-fill');
-                    }
+
+                    fetch('@Url.Action("ToggleFavorite", "Product")', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'productId=' + productId
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.redirect && data.url) {
+                            window.location.href = data.url;
+                            return;
+                        }
+                        if (!data.success) return;
+                        if (data.inFavorites) {
+                            btn.classList.add('active', 'btn-primary');
+                            btn.classList.remove('btn-light');
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                            btn.title = 'Удалить из избранного';
+                        } else {
+                            btn.classList.remove('active', 'btn-primary');
+                            btn.classList.add('btn-light');
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                            btn.title = 'В избранное';
+                        }
+                    });
                 });
             });
         });

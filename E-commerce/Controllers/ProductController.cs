@@ -388,6 +388,14 @@ public class ProductController : BaseController
         };
     }
 
+	private List<int> GetFavoriteIds(int userId)
+	{
+		return _context.UserFavorites
+			.Where(f => f.UserId == userId)
+			.Select(f => f.ProductId)
+			.ToList();
+	}
+
 	public IActionResult Index(int page = 1)
 	{
 		var allProducts = GetAllProducts();
@@ -402,8 +410,66 @@ public class ProductController : BaseController
 		ViewBag.CurrentPage = page;
 		ViewBag.TotalPages = totalPages;
 		ViewBag.TotalProducts = allProducts.Count;
+		var user = GetSessionUser();
+		ViewBag.FavoriteIds = user != null ? GetFavoriteIds(user.Id) : new List<int>();
 
 		return View(products);
+	}
+
+	/// <summary>
+	/// Страница "Избранное" — товары, добавленные в избранное. Только для авторизованных.
+	/// </summary>
+	public IActionResult Favorites()
+	{
+		var user = GetSessionUser();
+		if (user == null)
+			return RedirectToAction("Register", "Account", new { returnUrl = Url.Action("Favorites", "Product") });
+
+		var ids = GetFavoriteIds(user.Id);
+		var allProducts = GetAllProducts();
+		var products = allProducts.Where(p => ids.Contains(p.Id)).ToList();
+		ViewBag.FavoriteIds = ids;
+		return View(products);
+	}
+
+	/// <summary>
+	/// Поиск по товарам (фиктивный: при любом запросе — «такого товара нет»).
+	/// </summary>
+	public IActionResult Search(string q)
+	{
+		ViewData["Title"] = "Поиск - AiMarket";
+		ViewBag.SearchQuery = q ?? "";
+		ViewBag.FavoriteIds = new List<int>();
+		return View(new List<Product>());
+	}
+
+	[HttpPost]
+	[IgnoreAntiforgeryToken]
+	public async Task<IActionResult> ToggleFavorite(int productId)
+	{
+		var user = GetSessionUser();
+		if (user == null)
+		{
+			var returnUrl = Request.Headers["Referer"].FirstOrDefault() ?? Url.Action("Index", "Product");
+			var registerUrl = Url.Action("Register", "Account", new { returnUrl });
+			return Json(new { success = false, redirect = true, url = registerUrl });
+		}
+
+		var existing = await _context.UserFavorites
+			.FirstOrDefaultAsync(f => f.UserId == user.Id && f.ProductId == productId);
+		var inFavorites = existing != null;
+		if (inFavorites)
+		{
+			_context.UserFavorites.Remove(existing!);
+		}
+		else
+		{
+			_context.UserFavorites.Add(new UserFavorite { UserId = user.Id, ProductId = productId });
+		}
+		await _context.SaveChangesAsync();
+
+		var count = await _context.UserFavorites.CountAsync(f => f.UserId == user.Id);
+		return Json(new { success = true, inFavorites = !inFavorites, count });
 	}
 
 	public IActionResult Details(int id)
@@ -435,6 +501,7 @@ public class ProductController : BaseController
 
 		ViewBag.UserBalance = user.Balance;
 		ViewBag.HasEnoughBalance = user.Balance >= product.Price;
+		ViewBag.IsFavorite = GetFavoriteIds(user.Id).Contains(id);
 
 		return View(product);
 	}

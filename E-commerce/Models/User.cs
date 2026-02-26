@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -36,6 +36,12 @@ public class User
 
 	[Required]
 	public bool WithdrawalEnabled { get; set; } = false; // Разрешен ли вывод средств администратором
+
+	/// <summary>
+	/// Уровень пользователя (0 по умолчанию). Изменяется администратором.
+	/// </summary>
+	[Required]
+	public int Level { get; set; } = 0;
 
 	[NotMapped]
 	public string FullName => $"{FirstName} {LastName}";

@@ -1,0 +1,22 @@
+@model List<SimpleEcommerce.Models.Product>
+@{
+    ViewData["Title"] = "Поиск - AiMarket";
+    var query = ViewBag.SearchQuery as string ?? "";
+}
+
+<div class="container mt-4">
+    <h1 class="fw-bold mb-4">Поиск товаров</h1>
+
+    @if (!string.IsNullOrWhiteSpace(query))
+    {
+        <p class="text-muted mb-4">По запросу «<strong>@query</strong>» ничего не найдено.</p>
+        <div class="alert alert-info d-flex align-items-center" role="alert">
+            <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+            <span>Такого товара нет. Попробуйте другой запрос или перейдите в <a href="@Url.Action("Index", "Product")" class="alert-link">каталог</a>.</span>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Введите запрос в строку поиска в меню.</p>
+    }
+</div>

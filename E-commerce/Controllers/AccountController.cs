@@ -14,16 +14,17 @@ public class AccountController : BaseController
 		_context = context;
 	}
 
-	public IActionResult Login()
+	public IActionResult Login(string? returnUrl = null)
 	{
 		if (GetSessionUser() != null)
-			return RedirectToAction("Profile");
+			return Redirect(returnUrl ?? Url.Action("Profile") ?? "/");
+		ViewBag.ReturnUrl = returnUrl;
 		return View();
 	}
 
 	// POST: /Account/Login
 	[HttpPost]
-	public async Task<IActionResult> Login(string email, string password)
+	public async Task<IActionResult> Login(string email, string password, string? returnUrl = null)
 	{
 		var user = await _context.Users
 			.FirstOrDefaultAsync(u => u.Email == email && u.Password == password);
@@ -31,16 +32,20 @@ public class AccountController : BaseController
 		if (user != null)
 		{
 			SaveUserToSession(user);
+			if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+				return Redirect(returnUrl);
 			return RedirectToAction("Profile");
 		}
 
 		ViewBag.Error = "Неверный email или пароль";
+		ViewBag.ReturnUrl = returnUrl;
 		return View();
 	}
 
-	public IActionResult Register()
+	public IActionResult Register(string? returnUrl = null)
 	{
 		ModelState.Clear();
+		ViewBag.ReturnUrl = returnUrl;
 		return View();
 	}
 
@@ -50,7 +55,7 @@ public class AccountController : BaseController
 	}
 
 	[HttpPost]
-	public async Task<IActionResult> Register(User user, bool agreeTerms = false)
+	public async Task<IActionResult> Register(User user, bool agreeTerms = false, string? returnUrl = null)
 	{
 		var agreeTermsValue = Request.Form["agreeTerms"].ToString();
 		bool hasAgreed = agreeTerms || agreeTermsValue == "true" || agreeTermsValue == "on";
@@ -59,6 +64,7 @@ public class AccountController : BaseController
 		{
 			ModelState.AddModelError("agreeTerms", "Для продолжения регистрации необходимо принять условия пользовательского соглашения");
 			ModelState.AddModelError("", "Пожалуйста, исправьте ошибки в форме");
+			ViewBag.ReturnUrl = returnUrl;
 			return View(user);
 		}
 
@@ -70,19 +76,23 @@ public class AccountController : BaseController
 			if (existingUser != null)
 			{
 				ModelState.AddModelError("Email", "Пользователь с таким email уже существует");
+				ViewBag.ReturnUrl = returnUrl;
 				return View(user);
 			}
 
 			user.Balance = 0;
-			user.Ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+			user.Ip = GetClientIpAddress();
 
 			_context.Users.Add(user);
 			await _context.SaveChangesAsync();
 
 			SaveUserToSession(user);
+			if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+				return Redirect(returnUrl);
 			return RedirectToAction("Profile");
 		}
 
+		ViewBag.ReturnUrl = returnUrl;
 		return View(user);
 	}
 

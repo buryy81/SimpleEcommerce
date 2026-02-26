@@ -1,7 +1,8 @@
-﻿@model SimpleEcommerce.Models.Product
+@model SimpleEcommerce.Models.Product
 
 @{
     ViewData["Title"] = Model.Name + " - AiMarket";
+    bool isFavorite = ViewBag.IsFavorite ?? false;
 }
 
 <div class="container mt-4">
@@ -97,8 +98,8 @@
                     
                     <div class="row g-2">
                         <div class="col-6">
-                            <button class="btn btn-outline-primary w-100" id="favoriteBtn">
-                                <i class="bi bi-heart me-2"></i>В избранное
+                            <button class="btn w-100 @(isFavorite ? "btn-primary" : "btn-outline-primary")" id="favoriteBtn" data-product-id="@Model.Id">
+                                <i class="bi @(isFavorite ? "bi-heart-fill" : "bi-heart") me-2"></i>@(isFavorite ? "В избранном" : "В избранное")
                             </button>
                         </div>
                         <div class="col-6">
@@ -307,25 +308,35 @@
                 if (favoriteBtn) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Кнопка избранное нажата');
-                    
-                    const icon = favoriteBtn.querySelector('i');
-                    if (!icon) {
-                        console.error('Иконка не найдена');
-                        return;
-                    }
-                    
-                    if (favoriteBtn.classList.contains('active')) {
-                        favoriteBtn.classList.remove('active', 'btn-primary');
-                        favoriteBtn.classList.add('btn-outline-primary');
-                        icon.classList.remove('bi-heart-fill');
-                        icon.classList.add('bi-heart');
-                    } else {
-                        favoriteBtn.classList.add('active', 'btn-primary');
-                        favoriteBtn.classList.remove('btn-outline-primary');
-                        icon.classList.remove('bi-heart');
-                        icon.classList.add('bi-heart-fill');
-                    }
+                    var productId = parseInt(favoriteBtn.getAttribute('data-product-id'), 10);
+                    if (!productId) return;
+                    var icon = favoriteBtn.querySelector('i');
+                    if (!icon) return;
+
+                    fetch('@Url.Action("ToggleFavorite", "Product")', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'productId=' + productId
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (!data.success) return;
+                        if (data.inFavorites) {
+                            favoriteBtn.classList.remove('btn-outline-primary');
+                            favoriteBtn.classList.add('btn-primary');
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                            var textNode = favoriteBtn.querySelector('i').nextSibling;
+                            if (textNode) textNode.textContent = ' В избранном';
+                        } else {
+                            favoriteBtn.classList.remove('btn-primary');
+                            favoriteBtn.classList.add('btn-outline-primary');
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                            var textNode2 = favoriteBtn.querySelector('i').nextSibling;
+                            if (textNode2) textNode2.textContent = ' В избранное';
+                        }
+                    });
                 }
             });
 

@@ -31,6 +31,14 @@
 
                     <h4 class="mb-1">@Model.FullName</h4>
                     <p class="text-muted mb-3">@Model.Email</p>
+                    <p class="mb-0">
+                        @{
+                            var levelTitle = Model.Level == 0
+                                ? "Уровень 0: доступен заработок за добавление объявлений в избранное."
+                                : "Уровень 1: добавление в избранное + выкуп товаров 1 и 2 ранга.";
+                        }
+                        <span id="userLevelBadge" class="badge bg-secondary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="@levelTitle" title="@levelTitle">Уровень @Model.Level</span>
+                    </p>
 
                     <div class="border-top pt-3 mt-3">
                         <div class="text-center">
@@ -292,6 +300,13 @@
 
 @section Scripts {
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Подсказка при наведении на уровень
+            var levelBadge = document.getElementById('userLevelBadge');
+            if (levelBadge && typeof bootstrap !== 'undefined') {
+                new bootstrap.Tooltip(levelBadge);
+            }
+        });
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('withdrawalForm');
             const submitBtn = document.getElementById('submitWithdrawalBtn');

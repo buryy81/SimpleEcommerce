@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using SimpleEcommerce.Data;
+using SimpleEcommerce.Extensions;
 using SimpleEcommerce.Models;
 
 namespace SimpleEcommerce.Controllers;
@@ -60,4 +61,10 @@ public abstract class BaseController : Controller
 		var user = GetSessionUser();
 		return user?.Email == AdminEmail;
 	}
+
+	/// <summary>
+	/// Возвращает IP-адрес клиента (с учётом X-Forwarded-For и X-Real-IP при работе за прокси).
+	/// </summary>
+	protected string? GetClientIpAddress() => HttpContext.GetClientIpAddress();
+
 }
