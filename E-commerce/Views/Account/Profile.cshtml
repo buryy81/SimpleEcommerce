@@ -41,13 +41,15 @@
                     </p>
 
                     <div class="border-top pt-3 mt-3">
-                        <div class="text-center">
-                            <div class="text-muted small mb-1">Баланс счета</div>
-                            <div class="fw-bold text-dark" style="font-size: 1.5rem; letter-spacing: 0.5px;">
-                                @Model.Balance.ToString("N0") <span class="text-muted" style="font-size: 1rem;">₽</span>
+                        <div class="profile-balance-block rounded-3 px-3 py-3 text-center">
+                            <div class="profile-balance-label">
+                                <i class="bi bi-wallet2 me-1"></i>Баланс счета
+                            </div>
+                            <div class="profile-balance-value">
+                                @Model.Balance.ToString("N0") <span class="profile-balance-currency">₽</span>
                                 @if (activeWithdrawal != null)
                                 {
-                                    <span class="text-warning" style="font-size: 0.9rem;">(вывод средств @activeWithdrawal.Amount.ToString("N0") ₽)</span>
+                                    <span class="profile-balance-withdrawal">(вывод @activeWithdrawal.Amount.ToString("N0") ₽)</span>
                                 }
                             </div>
                         </div>
@@ -107,13 +109,21 @@
                                 var isWithdrawalConfirmed = isWithdrawal && !isWithdrawalPending && transaction.Description?.Contains("Вывод средств") == true;
                                 var isTopUpPending = isTopUp && transaction.Description?.Contains("Заявка на пополнение баланса") == true;
                                 var isTopUpConfirmed = isTopUp && !isTopUpPending && (transaction.Description?.Contains("Пополнение счета") == true || transaction.Description?.Contains("подтверждена") == true || transaction.Description?.Contains("подтвержден") == true);
+                                var isTopUpRejected = isTopUp && transaction.Description?.Contains("Заявка на пополнение отклонена") == true;
                                 
                                 // Определяем иконку и стили
                                 string iconClass;
                                 string iconBg;
                                 string badgeClass;
                                 
-                                if (isWithdrawalConfirmed || isTopUpConfirmed)
+                                if (isTopUpRejected)
+                                {
+                                    // Заявка на пополнение отклонена админом — красное оформление
+                                    iconClass = "bi-x-circle text-danger";
+                                    iconBg = "bg-danger bg-opacity-10";
+                                    badgeClass = "bg-danger";
+                                }
+                                else if (isWithdrawalConfirmed || isTopUpConfirmed)
                                 {
                                     // Заявка подтверждена - зеленая галочка
                                     iconClass = "bi-check-circle text-success";
@@ -148,15 +158,16 @@
                                 }
                                 
                                 var amountDisplay = isPositive ? $"+{transaction.Amount:N0}" : $"{transaction.Amount:N0}";
+                                var rowTextClass = isTopUpRejected ? " text-danger" : "";
                                 
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="list-group-item d-flex justify-content-between align-items-center@(rowTextClass)">
                                     <div class="d-flex align-items-center">
                                         <div class="@iconBg rounded-circle p-2 me-3">
                                             <i class="bi @iconClass"></i>
                                         </div>
                                         <div>
                                             <h6 class="mb-1">@transaction.Description</h6>
-                                            <small class="text-muted">@transaction.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</small>
+                                            <small class="@(isTopUpRejected ? "text-danger opacity-75" : "text-muted")">@transaction.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</small>
                                         </div>
                                     </div>
                                     <span class="badge @badgeClass fs-6">@amountDisplay ₽</span>
@@ -180,61 +191,38 @@
 <!-- Модальное окно пополнения баланса -->
 <div class="modal fade" id="topUpModal" tabindex="-1" aria-labelledby="topUpModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="topUpModalLabel">Пополнение баланса</h5>
+        <div class="modal-content modal-topup">
+            <div class="modal-header modal-topup-header">
+                <h5 class="modal-title" id="topUpModalLabel"><i class="bi bi-wallet2 me-2"></i>Пополнение баланса</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-topup-body">
                 <form id="addFundsForm" method="post" action="@Url.Action("AddFunds", "Account")">
                     @Html.AntiForgeryToken()
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Сумма пополнения (₽):</label>
-                        <input type="number" class="form-control form-control-lg" name="amount" id="topUpAmountInput" min="100" step="100" value="1000" required>
-                        <small class="text-muted">Минимальная сумма: 100 ₽</small>
+                    <div class="modal-topup-amount mb-4">
+                        <label class="form-label">Сумма пополнения (₽)</label>
+                        <input type="number" class="form-control form-control-lg" name="amount" id="topUpAmountInput" min="100" step="100" value="1000" required placeholder="Например, 1000">
+                        <small class="text-muted mt-1 d-block">Минимальная сумма: 100 ₽</small>
                     </div>
                 
-                    <div class="card mb-4">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="bi bi-credit-card me-2"></i>Реквизиты для перевода</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label text-muted small">Номер карты</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control fw-bold" value="2200 7020 4514 2242" id="topUpCardNumber" readonly>
-                                    <button class="btn btn-outline-secondary" type="button" id="copyTopUpCardBtn">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label text-muted small">Получатель</label>
-                                <p class="mb-0 fw-semibold">Тинькофф банк. ИП Яндараев Тарас Иванович</p>
-                            </div>
-                            <div>
-                                <label class="form-label text-muted small">Назначение платежа</label>
-                                <p class="mb-0 text-muted small">Пополнение баланса</p>
-                            </div>
-                        </div>
-                    </div>
+                    @await Html.PartialAsync("_TopUpRequisites")
 
-                    <div class="text-center mb-4">
-                        <p class="mb-2 fw-semibold">Или отсканируйте QR-код (временно не работает)</p>
-                        <div class="bg-light p-3 rounded d-inline-block">
+                    <div class="modal-topup-qr text-center mb-4">
+                        <p class="mb-2 text-muted small">Или отсканируйте QR-код <span class="text-muted">(временно не работает)</span></p>
+                        <div class="modal-topup-qr-wrap d-inline-block p-3 rounded-3">
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=1000" alt="QR Code" class="img-fluid" style="max-width: 200px;" id="topUpQrCode">
                         </div>
                     </div>
 
-                    <div class="alert alert-info mb-0">
+                    <div class="modal-topup-tip alert mb-0">
                         <i class="bi bi-info-circle me-2"></i>
-                        После перевода нажмите кнопку "Перевел" для подтверждения платежа
+                        После перевода нажмите кнопку «Перевел» для подтверждения платежа
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="confirmTopUpBtn">
+            <div class="modal-footer modal-topup-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary modal-topup-submit" id="confirmTopUpBtn">
                     <i class="bi bi-check-circle me-2"></i>Перевел
                 </button>
             </div>
@@ -274,6 +262,7 @@
                                 <option value="Тинькофф">Тинькофф</option>
                                 <option value="Райффайзенбанк">Райффайзенбанк</option>
                                 <option value="Газпромбанк">Газпромбанк</option>
+                                <option value="Газпромбанк">Россельхозбанк</option>
                                 <option value="Другой">Другой</option>
                             </select>
                         </div>
@@ -300,6 +289,18 @@
 
 @section Scripts {
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Открыть модалку пополнения, если перешли по ссылке «пополнить баланс»
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('openTopUp') === '1') {
+                var topUpModal = document.getElementById('topUpModal');
+                if (topUpModal && typeof bootstrap !== 'undefined') {
+                    var modal = bootstrap.Modal.getOrCreateInstance(topUpModal);
+                    modal.show();
+                }
+                history.replaceState({}, '', window.location.pathname);
+            }
+        });
         document.addEventListener('DOMContentLoaded', function() {
             // Подсказка при наведении на уровень
             var levelBadge = document.getElementById('userLevelBadge');
@@ -409,6 +410,8 @@
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Обработка...';
                 
                 const formData = new FormData(form);
+                // Всегда отправляем сумму с точкой, чтобы сервер корректно распарсил (запятая в форме даёт ошибку)
+                formData.set('amount', amountValue);
                 const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
                 
                 // Формируем URL для запроса

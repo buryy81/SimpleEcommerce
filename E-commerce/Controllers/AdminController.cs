@@ -489,6 +489,44 @@ public class AdminController : BaseController
 
 	[HttpPost]
 	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> RejectTopUp(int userId, decimal amount)
+	{
+		try
+		{
+			if (!IsAdmin())
+				return Json(new { success = false, message = "Доступ запрещен" });
+
+			var pendingTopUp = await _context.PendingRequests
+				.FirstOrDefaultAsync(p => p.UserId == userId && p.Type == RequestTypeTopUp && !p.IsCompleted && p.Amount == amount);
+
+			if (pendingTopUp == null)
+				return Json(new { success = false, message = "Заявка на пополнение не найдена" });
+
+			pendingTopUp.IsCompleted = true;
+
+			var existingTransaction = await _context.Transactions
+				.FirstOrDefaultAsync(t => t.UserId == userId
+					&& t.Amount == amount
+					&& t.Description != null && t.Description.Contains("Заявка на пополнение баланса на сумму")
+					&& t.Type == TransactionTypeTopUp
+					&& t.CreatedAt >= pendingTopUp.CreatedAt.AddMinutes(-1)
+					&& t.CreatedAt <= pendingTopUp.CreatedAt.AddMinutes(1));
+
+			if (existingTransaction != null)
+				existingTransaction.Description = $"Заявка на пополнение отклонена (сумма {amount:N0} ₽)";
+
+			await _context.SaveChangesAsync();
+
+			return Json(new { success = true, message = $"Заявка на пополнение на {amount:N0} ₽ отклонена" });
+		}
+		catch (Exception ex)
+		{
+			return Json(new { success = false, message = $"Ошибка: {ex.Message}" });
+		}
+	}
+
+	[HttpPost]
+	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> QuickWithdrawal(int userId, decimal amount)
 	{
 		try

@@ -4,26 +4,30 @@
     ViewData["Title"] = "Регистрация";
 }
 
-<div class="container mt-5">
+<div class="container page-auth">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h3 class="mb-0">Регистрация</h3>
-                </div>
+            <div class="card auth-card shadow-sm">
                 <div class="card-body">
+                    <div class="auth-icon-wrap auth-icon-register">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <h1 class="auth-title">Регистрация</h1>
+                    <p class="auth-subtitle">Создайте аккаунт для покупок на AiMarket</p>
+
                     @{
                         var errors = ViewData.ModelState.Values.SelectMany(v => v.Errors).ToList();
                     }
                     @if (errors.Any())
                     {
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger mb-4">
                             @foreach (var error in errors)
                             {
                                 <div>@error.ErrorMessage</div>
                             }
                         </div>
                     }
+
                     <form method="post" id="registerForm">
                         @if (ViewBag.ReturnUrl != null)
                         {
@@ -32,30 +36,42 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="FirstName" class="form-label">Имя</label>
-                                <input asp-for="FirstName" class="form-control" required>
-                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                                <div class="input-group-auth">
+                                    <i class="bi bi-person input-icon"></i>
+                                    <input asp-for="FirstName" class="form-control" placeholder="Иван" required>
+                                </div>
+                                <span asp-validation-for="FirstName" class="text-danger small"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="LastName" class="form-label">Фамилия</label>
-                                <input asp-for="LastName" class="form-control" required>
-                                <span asp-validation-for="LastName" class="text-danger"></span>
+                                <div class="input-group-auth">
+                                    <i class="bi bi-person input-icon"></i>
+                                    <input asp-for="LastName" class="form-control" placeholder="Иванов" required>
+                                </div>
+                                <span asp-validation-for="LastName" class="text-danger small"></span>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="Email" class="form-label">Email</label>
-                            <input asp-for="Email" type="email" class="form-control" required>
-                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <div class="input-group-auth">
+                                <i class="bi bi-envelope input-icon"></i>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="example@mail.ru" required>
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="Password" class="form-label">Пароль</label>
-                            <input asp-for="Password" type="password" class="form-control" required>
-                            <span asp-validation-for="Password" class="text-danger"></span>
+                            <div class="input-group-auth">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="agreeTerms" name="agreeTerms" value="true">
                                 <label class="form-check-label" for="agreeTerms">
@@ -80,8 +96,8 @@
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success">Зарегистрироваться</button>
-                            <a href="@Url.Action("Login", "Account")" class="btn btn-outline-secondary">
+                            <button type="submit" class="btn btn-auth-primary btn-register">Зарегистрироваться</button>
+                            <a href="@Url.Action("Login", "Account")" class="btn btn-auth-link">
                                 Уже есть аккаунт? Войти
                             </a>
                         </div>
@@ -100,7 +116,6 @@
             const termsError = document.getElementById('termsError');
             
             if (form && agreeTermsCheckbox) {
-                // Проверка перед отправкой
                 form.addEventListener('submit', function(e) {
                     if (!agreeTermsCheckbox.checked) {
                         e.preventDefault();
@@ -117,7 +132,6 @@
                     }
                 });
                 
-                // Убираем ошибку при изменении чекбокса
                 agreeTermsCheckbox.addEventListener('change', function() {
                     if (this.checked) {
                         termsError.classList.add('d-none');

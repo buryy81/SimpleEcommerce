@@ -222,30 +222,7 @@
                         <small class="text-muted">Минимальная сумма: 100 ₽</small>
                     </div>
                 
-                    <div class="card mb-4">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="bi bi-credit-card me-2"></i>Реквизиты для перевода</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label text-muted small">Номер карты</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control fw-bold" value="5536 9138 1234 5678" id="cardNumber" readonly>
-                                    <button class="btn btn-outline-secondary" type="button" id="copyCardBtn">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label text-muted small">Получатель</label>
-                                <p class="mb-0 fw-semibold">ИП Иванов Иван Иванович</p>
-                            </div>
-                            <div>
-                                <label class="form-label text-muted small">Назначение платежа</label>
-                                <p class="mb-0 text-muted small">Пополнение баланса AiMarket</p>
-                            </div>
-                        </div>
-                    </div>
+                    @await Html.PartialAsync("_TopUpRequisites")
 
                     <div class="text-center mb-4">
                         <p class="mb-2 fw-semibold">Или отсканируйте QR-код</p>
@@ -446,30 +423,30 @@
                 }
             });
 
-            // ========== Кнопка "Копировать номер карты" ==========
+            // ========== Кнопка "Копировать номер карты" (те же ID, что и в личном кабинете) ==========
             document.addEventListener('click', function(e) {
-                const copyCardBtn = e.target.closest('#copyCardBtn');
-                if (copyCardBtn) {
+                const copyBtn = e.target.closest('#copyTopUpCardBtn');
+                if (copyBtn) {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    const cardNumber = document.getElementById('cardNumber');
+                    const cardNumber = document.getElementById('topUpCardNumber');
                     if (!cardNumber) return;
                     
                     const cardNumberText = cardNumber.value.replace(/\s/g, '');
-                    const originalHtml = copyCardBtn.innerHTML;
+                    const originalHtml = copyBtn.innerHTML;
                     
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         navigator.clipboard.writeText(cardNumberText)
                             .then(() => {
-                                copyCardBtn.innerHTML = '<i class="bi bi-check"></i>';
-                                copyCardBtn.classList.remove('btn-outline-secondary');
-                                copyCardBtn.classList.add('btn-success');
+                                copyBtn.innerHTML = '<i class="bi bi-check"></i>';
+                                copyBtn.classList.remove('btn-outline-secondary');
+                                copyBtn.classList.add('btn-success');
                                 
                                 setTimeout(() => {
-                                    copyCardBtn.innerHTML = originalHtml;
-                                    copyCardBtn.classList.remove('btn-success');
-                                    copyCardBtn.classList.add('btn-outline-secondary');
+                                    copyBtn.innerHTML = originalHtml;
+                                    copyBtn.classList.remove('btn-success');
+                                    copyBtn.classList.add('btn-outline-secondary');
                                 }, 2000);
                             });
                     }

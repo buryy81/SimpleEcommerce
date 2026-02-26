@@ -48,9 +48,9 @@
                             <a class="nav-link fw-semibold" href="@Url.Action("Favorites", "Product")" title="Избранное">Избранное</a>
                         </li>
                         <li class="nav-item d-flex align-items-center ms-2">
-                            <form class="d-flex" method="get" action="@Url.Action("Search", "Product")" role="search">
-                                <input class="form-control form-control-sm" type="search" name="q" placeholder="Найти на AiMarket..." aria-label="Поиск" style="min-width: 580px; min-height: 38px;">
-                                <button class="btn btn-outline-primary btn-sm ms-1" type="submit" title="Искать">
+                            <form class="d-flex navbar-search-form" method="get" action="@Url.Action("Search", "Product")" role="search">
+                                <input class="form-control form-control-sm navbar-search-input" type="search" name="q" placeholder="Найти на AiMarket..." aria-label="Поиск">
+                                <button class="btn btn-outline-primary btn-sm ms-1 navbar-search-btn" type="submit" title="Искать">
                                     <i class="bi bi-search"></i>
                                 </button>
                             </form>
@@ -63,27 +63,11 @@
                             var user = userJson != null ? System.Text.Json.JsonSerializer.Deserialize<SimpleEcommerce.Models.User>(userJson) : null;
                             if (user != null)
                             {
-                                var pendingTopUpStr = Context.Session.GetString("PendingTopUp");
-                                decimal? pendingTopUp = null;
-                                if (!string.IsNullOrEmpty(pendingTopUpStr) && decimal.TryParse(pendingTopUpStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var pendingAmount))
-                                {
-                                    pendingTopUp = pendingAmount;
-                                }
-                                
-                                <li class="nav-item me-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="balance-display d-flex align-items-center px-3 py-2 bg-light rounded">
-                                            <i class="bi bi-wallet2 text-success me-2"></i>
-                                            <span class="fw-bold text-success">@user.Balance.ToString("N0") ₽</span>
-                                        </div>
-                                        @if (pendingTopUp.HasValue)
-                                        {
-                                            <div class="pending-topup-badge badge bg-warning text-dark px-2 py-1" style="font-size: 0.75rem; white-space: nowrap;">
-                                                <i class="bi bi-hourglass-split me-1"></i>
-                                                Ожидается +@pendingTopUp.Value.ToString("N0") ₽
-                                            </div>
-                                        }
-                                    </div>
+                                <li class="nav-item me-3 d-flex align-items-center">
+                                    <a href="@Url.Action("Profile", "Account", new { openTopUp = "1" })" class="balance-display d-flex align-items-center gap-2 px-3 py-2 text-decoration-none" title="Пополнить баланс">
+                                        <i class="bi bi-wallet2"></i>
+                                        <span class="fw-bold">@user.Balance.ToString("N0") ₽</span>
+                                    </a>
                                 </li>
                                 @if (user.Email == "admin@admin.com")
                                 {

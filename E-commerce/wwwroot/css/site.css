@@ -40,19 +40,90 @@ body {
   letter-spacing: -0.5px;
 }
 
+/* Единое выравнивание всех пунктов навбара (баланс, профиль, выйти) */
+.navbar-nav .nav-item {
+  display: flex;
+  align-items: center;
+}
+
 .navbar-nav .nav-link {
   font-weight: 500;
   padding: 0.5rem 1rem;
   transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  box-sizing: border-box;
 }
 
 .navbar-nav .nav-link:hover {
   color: #0056b3 !important;
 }
 
+.navbar-search-form {
+  min-width: 0;
+}
+
+.navbar-search-form .navbar-search-input {
+  border-radius: 999px;
+  min-height: 38px;
+}
+
+@media (min-width: 992px) {
+  .navbar-search-form .navbar-search-input {
+    min-width: 280px;
+    width: 100%;
+    max-width: 540px;
+  }
+}
+
+.navbar-search-form .navbar-search-btn {
+  border-radius: 999px;
+}
+
 .balance-display {
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%) !important;
-  border: 1px solid #81c784;
+  background: linear-gradient(135deg, #f0f7f0 0%, #e5f0e6 50%, #e8f2e9 100%) !important;
+  border: 1px solid rgba(129, 199, 132, 0.35);
+  border-radius: 12px;
+  flex-shrink: 0;
+  height: 38px;
+  line-height: 1;
+  box-sizing: border-box;
+  color: #2d5a2f !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.balance-display i {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  width: 1.25em;
+  text-align: center;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.balance-display span {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Выравнивание блока баланса в навбаре по центру с поиском и остальными пунктами */
+.navbar-nav .nav-item .balance-display {
+  align-self: center;
+}
+
+a.balance-display {
+  cursor: pointer;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+a.balance-display:hover {
+  box-shadow: 0 2px 12px rgba(102, 187, 106, 0.25);
+  border-color: rgba(129, 199, 132, 0.55);
+  background: linear-gradient(135deg, #e8f2e9 0%, #dcebdd 50%, #e2efe3 100%) !important;
+  color: #234d26 !important;
 }
 
 /* Product Cards */
@@ -206,6 +277,152 @@ body {
 .modal-footer {
   border-top: 1px solid #e9ecef;
   padding: 1rem 1.5rem;
+}
+
+/* Карточка пополнения баланса — мягкое оформление */
+.modal-topup .modal-content {
+  border-radius: 20px;
+  border: 1px solid rgba(0, 86, 179, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.modal-topup .modal-topup-header {
+  background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid rgba(0, 86, 179, 0.08);
+  padding: 1.25rem 1.5rem;
+}
+
+.modal-topup .modal-topup-header .modal-title {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 1.15rem;
+}
+
+.modal-topup .modal-topup-body {
+  padding: 1.5rem 1.5rem 1.25rem;
+  background: #fff;
+}
+
+.modal-topup .modal-topup-amount .form-label {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.9375rem;
+}
+
+.modal-topup .modal-topup-amount .form-control {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 86, 179, 0.2);
+  padding: 0.65rem 1rem;
+  font-size: 1.1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-topup .modal-topup-amount .form-control:focus {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.12);
+}
+
+.modal-topup .modal-topup-amount small {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+/* Реквизиты внутри модалки пополнения */
+.modal-topup .topup-requisites-card {
+  border: 1px solid rgba(0, 86, 179, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.modal-topup .topup-requisites-header {
+  background: linear-gradient(145deg, #f0f7f0 0%, #e8f2e9 100%);
+  border-bottom: 1px solid rgba(102, 187, 106, 0.2);
+  padding: 0.875rem 1.25rem;
+  font-weight: 600;
+  color: #2d5a2f;
+  font-size: 0.9375rem;
+}
+
+.modal-topup .topup-requisites-body {
+  padding: 1.25rem 1.25rem 1rem;
+  background: #fafbfa;
+}
+
+.modal-topup .topup-requisites-input-group .form-control {
+  border-radius: 10px 0 0 10px;
+  border: 1px solid rgba(0, 86, 179, 0.15);
+  background: #fff;
+}
+
+.modal-topup .topup-requisites-input-group .btn-copy-requisites {
+  border-radius: 0 10px 10px 0;
+  border-color: rgba(0, 86, 179, 0.2);
+  color: #475569;
+  transition: background 0.2s, color 0.2s;
+}
+
+.modal-topup .topup-requisites-input-group .btn-copy-requisites:hover {
+  background: rgba(0, 86, 179, 0.06);
+  color: #0056b3;
+  border-color: rgba(0, 86, 179, 0.3);
+}
+
+.modal-topup .modal-topup-qr-wrap {
+  background: linear-gradient(145deg, #f8faf8 0%, #f0f4f0 100%);
+  border: 1px solid rgba(0, 86, 179, 0.08);
+}
+
+.modal-topup .modal-topup-tip {
+  background: linear-gradient(145deg, #eff6ff 0%, #e0effe 100%);
+  border: 1px solid rgba(0, 86, 179, 0.15);
+  border-radius: 12px;
+  color: #1e40af;
+  font-size: 0.9375rem;
+  padding: 0.875rem 1rem;
+}
+
+.modal-topup .modal-topup-tip .bi-info-circle {
+  opacity: 0.9;
+}
+
+.modal-topup .modal-topup-footer {
+  background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
+  border-top: 1px solid rgba(0, 86, 179, 0.08);
+  padding: 1rem 1.5rem;
+  gap: 0.75rem;
+}
+
+.modal-topup .modal-topup-footer .btn {
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.modal-topup .modal-topup-footer .btn:hover {
+  transform: translateY(-1px);
+}
+
+.modal-topup .modal-topup-submit {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 86, 179, 0.3);
+}
+
+.modal-topup .modal-topup-submit:hover {
+  box-shadow: 0 4px 16px rgba(0, 86, 179, 0.35);
+}
+
+/* Реквизиты на странице (вне модалки) — мягче по умолчанию */
+.topup-requisites-card .topup-requisites-header {
+  background: linear-gradient(145deg, #f0f7f0 0%, #e8f2e9 100%);
+  border-bottom: 1px solid rgba(102, 187, 106, 0.2);
+}
+
+.topup-requisites-card .topup-requisites-body {
+  background: #fafbfa;
 }
 
 /* QR Code Container */
@@ -458,6 +675,45 @@ body {
   margin-top: 1.25rem !important;
 }
 
+/* Блок баланса в карточке профиля — мягкое оформление */
+.page-profile .profile-balance-block {
+  background: linear-gradient(145deg, #f6faf7 0%, #eef5ef 100%);
+  border: 1px solid rgba(102, 187, 106, 0.2);
+}
+
+.page-profile .profile-balance-label {
+  font-size: 0.8125rem;
+  color: #5a6d5c;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.35rem;
+}
+
+.page-profile .profile-balance-label .bi-wallet2 {
+  opacity: 0.75;
+}
+
+.page-profile .profile-balance-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e3b20;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+.page-profile .profile-balance-currency {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7c6d;
+}
+
+.page-profile .profile-balance-withdrawal {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #9a7b2e;
+  margin-top: 0.25rem;
+}
+
 .page-profile .profile-sidebar-card .btn {
   border-radius: 12px;
   padding: 0.65rem 1rem;
@@ -515,6 +771,226 @@ body {
   box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
 }
 
+/* ---------- Вход и регистрация: мягкий вид ---------- */
+.page-auth {
+  min-height: 60vh;
+  padding: 2.5rem 0 4rem;
+}
+
+.page-auth::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(160deg, #f0f4f8 0%, #e8eef5 35%, #f5f7fa 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.page-auth .auth-card {
+  border: none;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 86, 179, 0.06);
+}
+
+.page-auth .auth-card .card-body {
+  padding: 2.25rem 2rem;
+}
+
+.page-auth .auth-title {
+  font-weight: 700;
+  color: #1a365d;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.page-auth .auth-subtitle {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 1.75rem;
+}
+
+.page-auth .auth-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.page-auth .auth-icon-wrap.auth-icon-login {
+  background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+  color: #0056b3;
+}
+
+.page-auth .auth-icon-wrap.auth-icon-register {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  color: #1e7e34;
+}
+
+.page-auth .form-label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.page-auth .form-control {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 86, 179, 0.12);
+  padding: 0.65rem 1rem 0.65rem 2.75rem;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.page-auth .form-control:focus {
+  border-color: rgba(0, 86, 179, 0.4);
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+}
+
+.page-auth .input-group-auth {
+  position: relative;
+}
+
+.page-auth .input-group-auth .input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 1.1rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.page-auth .btn-auth-primary {
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+}
+
+.page-auth .btn-auth-primary.btn-login {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  color: #fff;
+}
+
+.page-auth .btn-auth-primary.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 86, 179, 0.3);
+  color: #fff;
+}
+
+.page-auth .btn-auth-primary.btn-register {
+  background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+  color: #fff;
+}
+
+.page-auth .btn-auth-primary.btn-register:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(30, 126, 52, 0.3);
+  color: #fff;
+}
+
+.page-auth .btn-auth-link {
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid rgba(0, 86, 179, 0.15);
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.page-auth .btn-auth-link:hover {
+  background: rgba(0, 86, 179, 0.06);
+  color: #0056b3;
+  border-color: rgba(0, 86, 179, 0.2);
+}
+
+.page-auth .alert-danger {
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  color: #c53030;
+}
+
+.page-auth .form-check-input {
+  border-radius: 6px;
+  border: 1px solid rgba(0, 86, 179, 0.25);
+}
+
+.page-auth .form-check-input:checked {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.page-auth .form-check-label {
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.page-auth .form-check-label a {
+  color: #0056b3;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.page-auth .form-check-label a:hover {
+  text-decoration: underline;
+}
+
+/* Мобильный навбар: поиск и баланс не накладываются */
+@media (max-width: 991.98px) {
+  #navbarNav .navbar-nav.me-auto {
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+  
+  #navbarNav .nav-item.d-flex.align-items-center.ms-2 {
+    width: 100%;
+    margin-left: 0 !important;
+    margin-top: 0.25rem;
+  }
+  
+  #navbarNav .navbar-search-form {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  #navbarNav .navbar-search-form .navbar-search-input {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+  }
+  
+  #navbarNav .navbar-nav:last-of-type {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  
+  #navbarNav .navbar-nav:last-of-type .nav-item {
+    margin-right: 0;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .hero-section {
@@ -551,5 +1027,17 @@ body {
   .page-profile .profile-sidebar-card .card-body,
   .page-profile .profile-history-card .list-group-item {
     padding: 1rem 1.25rem;
+  }
+  
+  .page-auth {
+    padding: 1.5rem 0 3rem;
+  }
+  
+  .page-auth .auth-card .card-body {
+    padding: 1.5rem 1.25rem;
+  }
+  
+  .page-auth .auth-title {
+    font-size: 1.35rem;
   }
 }

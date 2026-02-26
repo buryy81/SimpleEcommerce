@@ -198,8 +198,15 @@ public class AccountController : BaseController
 
 	[HttpPost]
 	[ValidateAntiForgeryToken]
-	public async Task<IActionResult> RequestWithdrawal(decimal amount, string bank, string cardOrPhone)
+	public async Task<IActionResult> RequestWithdrawal([FromForm(Name = "amount")] string? amountStr, string bank, string cardOrPhone)
 	{
+		// Парсим сумму: и с запятой (100,00), и с точкой (100.00)
+		var amountRaw = (amountStr ?? Request.Form["amount"].ToString() ?? "").Replace(',', '.');
+		if (!decimal.TryParse(amountRaw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var amount))
+		{
+			return Json(new { success = false, message = "Неверная сумма для вывода" });
+		}
+
 		var sessionUser = GetSessionUser();
 		if (sessionUser == null)
 			return Json(new { success = false, message = "Необходима авторизация" });
