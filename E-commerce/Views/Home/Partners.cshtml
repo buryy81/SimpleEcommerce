@@ -1,0 +1,80 @@
+@{
+    ViewData["Title"] = "Партнёры";
+}
+
+<div class="container py-4 page-partners">
+    <div class="partners-header text-center mb-5">
+        <h1 class="fw-bold mb-2"></h1>
+        <p class="text-muted mb-0"></p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="partner-card card h-100 border-0 shadow-sm">
+                <div class="partner-card-body card-body text-center d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="partner-logo partner-logo-ozon rounded-3 mb-3">
+                        <span class="partner-name">Ozon</span>
+                    </div>
+                    <p class="small text-muted mb-0">Маркетплейс №1 в России</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="partner-card card h-100 border-0 shadow-sm">
+                <div class="partner-card-body card-body text-center d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="partner-logo partner-logo-wb rounded-3 mb-3">
+                        <span class="partner-name">Wildberries</span>
+                    </div>
+                    <p class="small text-muted mb-0">Одежда, обувь и товары для дома</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="partner-card card h-100 border-0 shadow-sm">
+                <div class="partner-card-body card-body text-center d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="partner-logo partner-logo-yandex rounded-3 mb-3">
+                        <span class="partner-name">Яндекс Маркет</span>
+                    </div>
+                    <p class="small text-muted mb-0">Доставка за день</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="partner-card card h-100 border-0 shadow-sm">
+                <div class="partner-card-body card-body text-center d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="partner-logo partner-logo-ali rounded-3 mb-3">
+                        <span class="partner-name">AliExpress</span>
+                    </div>
+                    <p class="small text-muted mb-0">Товары из Китая с быстрой доставкой</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="partner-card card h-100 border-0 shadow-sm">
+                <div class="partner-card-body card-body text-center d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="partner-logo partner-logo-lamoda rounded-3 mb-3">
+                        <span class="partner-name">Lamoda</span>
+                    </div>
+                    <p class="small text-muted mb-0">Мода и стиль</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="partner-card card h-100 border-0 shadow-sm">
+                <div class="partner-card-body card-body text-center d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="partner-logo partner-logo-beru rounded-3 mb-3">
+                        <span class="partner-name">СберМегаМаркет</span>
+                    </div>
+                    <p class="small text-muted mb-0">Широкий ассортимент</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="partners-cta mt-5 py-4 rounded-3 text-center">
+        <p class="mb-2 fw-semibold">Выполняйте задания от партнёров и получайте вознаграждения на баланс</p>
+        <a href="@Url.Action("Index", "Product")" class="btn btn-primary">
+            <i class="bi bi-grid-3x3-gap me-2"></i>Перейти в каталог
+        </a>
+    </div>
+</div>

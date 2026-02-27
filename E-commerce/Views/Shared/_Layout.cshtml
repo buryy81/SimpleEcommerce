@@ -20,7 +20,7 @@
                         </div>
                     </div>
                     <div class="col-md-6 text-end">
-                        <span class="small">Доставка до двери завтра</span>
+                        <span class="small">Официальная платформа</span>
                     </div>
                 </div>
             </div>
@@ -39,13 +39,22 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link fw-semibold" href="/">Главная</a>
+                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-2" href="/">
+                                <i class="bi bi-house-door fs-5 mb-1 nav-link-icon"></i>
+                                <span class="small">Главная</span>
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link fw-semibold" href="/Product">Каталог</a>
+                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-2" href="/Product">
+                                <i class="bi bi-grid fs-5 mb-1 nav-link-icon"></i>
+                                <span class="small">Каталог</span>
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link fw-semibold" href="@Url.Action("Favorites", "Product")" title="Избранное">Избранное</a>
+                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-2" href="@Url.Action("Favorites", "Product")" title="Избранное">
+                                <i class="bi bi-heart fs-5 mb-1 nav-link-icon"></i>
+                                <span class="small">Избранное</span>
+                            </a>
                         </li>
                         <li class="nav-item d-flex align-items-center ms-2">
                             <form class="d-flex navbar-search-form" method="get" action="@Url.Action("Search", "Product")" role="search">
@@ -107,12 +116,30 @@
         @RenderBody()
     </main>
 
-    <footer class="footer bg-dark text-white mt-5 py-4">
-        <div class="container">
+    <footer class="footer bg-dark text-white mt-5">
+        <div class="footer-partners py-3">
+            <div class="container">
+                <div class="footer-partners-row d-flex flex-wrap align-items-center justify-content-center gap-2 gap-md-3">
+                    <span class="footer-partners-label text-muted small me-1 me-md-2"></span>
+                    <span class="footer-partner footer-partner-ozon">Ozon</span>
+                    <span class="footer-partner footer-partner-wb">Wildberries</span>
+                    <span class="footer-partner footer-partner-yandex">Яндекс Маркет</span>
+                    <span class="footer-partner footer-partner-ali">AliExpress</span>
+                    <span class="footer-partner footer-partner-lamoda">Lamoda</span>
+                    <span class="footer-partner footer-partner-beru">СберМегаМаркет</span>
+                </div>
+            </div>
+        </div>
+        <div class="container py-4">
             <div class="row">
                 <div class="col-md-6">
                     <h5 class="mb-3">AiMarket</h5>
                     <p class="small text-muted">Интернет-магазин товаров</p>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#supportModal" aria-label="Служба поддержки">
+                            <i class="bi bi-headset me-1"></i>Служба поддержки
+                        </button>
+                    </div>
                 </div>
                 <div class="col-md-6 text-end">
                     <p class="small mb-0">&copy; 2026 AiMarket. Все права защищены.</p>
@@ -120,6 +147,58 @@
             </div>
         </div>
     </footer>
+
+    <!-- Модальное окно: обращение в службу поддержки (только клиент) -->
+    <div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="supportModalLabel">
+                        <i class="bi bi-headset me-2"></i>Обращение в службу поддержки
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body" id="supportModalBody">
+                    <form id="supportForm" novalidate>
+                        <div class="mb-3">
+                            <label for="supportTopic" class="form-label">Тема</label>
+                            <select class="form-select" id="supportTopic" name="topic" required>
+                                <option value="">Выберите тему</option>
+                                <option value="order">Вопрос по заказу</option>
+                                <option value="payment">Оплата и баланс</option>
+                                <option value="delivery">Доставка</option>
+                                <option value="return">Возврат товара</option>
+                                <option value="other">Другое</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supportName" class="form-label">Ваше имя</label>
+                            <input type="text" class="form-control" id="supportName" name="name" placeholder="Иван" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supportEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="supportEmail" name="email" placeholder="example@mail.ru" required>
+                        </div>
+                        <div class="mb-0">
+                            <label for="supportMessage" class="form-label">Сообщение</label>
+                            <textarea class="form-control" id="supportMessage" name="message" rows="4" placeholder="Опишите ваш вопрос или проблему..." required></textarea>
+                        </div>
+                    </form>
+                    <div id="supportSuccess" class="text-center py-4 d-none">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                        <h6 class="mt-3 mb-2">Обращение принято</h6>
+                        <p class="text-muted small mb-0">Мы свяжемся с вами в ближайшее время по указанному email.</p>
+                    </div>
+                </div>
+                <div class="modal-footer" id="supportModalFooter">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary" form="supportForm" id="supportSubmitBtn">
+                        <i class="bi bi-send me-1"></i>Отправить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

@@ -31,6 +31,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddDistributedMemoryCache(); // Для хранения сессий в памяти
+builder.Services.AddHttpClient(); // для ProductRecommendationService (OpenAI)
+// builder.Services.AddScoped<SimpleEcommerce.Services.ProductRecommendationService>();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Время жизни сессии

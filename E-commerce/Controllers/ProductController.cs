@@ -413,6 +413,17 @@ public class ProductController : BaseController
 		var user = GetSessionUser();
 		ViewBag.FavoriteIds = user != null ? GetFavoriteIds(user.Id) : new List<int>();
 
+		// Рекомендации на основе избранного (OpenAI) — черновик, раскомментировать при подключении ProductRecommendationService:
+		// if (user != null)
+		// {
+		// 	var favoriteIds = GetFavoriteIds(user.Id);
+		// 	var recommendedIds = await _recommendationService.GetRecommendedProductIdsAsync(user.Id, allProducts, favoriteIds);
+		// 	ViewBag.RecommendedProductIds = recommendedIds;
+		// 	ViewBag.RecommendedProducts = allProducts.Where(p => recommendedIds.Contains(p.Id)).OrderBy(p => recommendedIds.IndexOf(p.Id)).ToList();
+		// }
+		// else
+		// 	ViewBag.RecommendedProductIds = new List<int>();
+
 		return View(products);
 	}
 
