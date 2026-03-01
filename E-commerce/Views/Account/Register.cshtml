@@ -66,7 +66,10 @@
                             <label asp-for="Password" class="form-label">Пароль</label>
                             <div class="input-group-auth">
                                 <i class="bi bi-lock input-icon"></i>
-                                <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" required>
+                                <input asp-for="Password" type="password" class="form-control" id="password" placeholder="••••••••" required>
+                                <button type="button" class="btn-toggle-password" id="togglePassword" aria-label="Показать пароль">
+                                    <i class="bi bi-eye" id="eyeIcon"></i>
+                                </button>
                             </div>
                             <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
@@ -137,6 +140,28 @@
                         termsError.classList.add('d-none');
                         termsError.classList.remove('d-block');
                         this.classList.remove('is-invalid');
+                    }
+                });
+            }
+            
+            // Переключение видимости пароля
+            const passwordInput = document.getElementById('password');
+            const toggleButton = document.getElementById('togglePassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput && toggleButton && eyeIcon) {
+                toggleButton.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    if (type === 'text') {
+                        eyeIcon.classList.remove('bi-eye');
+                        eyeIcon.classList.add('bi-eye-slash');
+                        toggleButton.setAttribute('aria-label', 'Скрыть пароль');
+                    } else {
+                        eyeIcon.classList.remove('bi-eye-slash');
+                        eyeIcon.classList.add('bi-eye');
+                        toggleButton.setAttribute('aria-label', 'Показать пароль');
                     }
                 });
             }

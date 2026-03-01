@@ -28,8 +28,8 @@
         
         <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
             <div class="container">
-                <a class="navbar-brand fw-bold text-primary fs-3" href="/">
-                    <i class="bi bi-bag-check-fill"></i> AiMarket
+                <a class="navbar-brand fw-bold text-primary fs-1" href="/" style="font-size: 2rem; padding: 0.5rem 1rem;">
+                    <i class="bi bi-bag-check-fill" style="font-size: 1.5rem;"></i> AiMarket
                 </a>
                 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -39,24 +39,31 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-2" href="/">
+                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-0 px-2" href="/">
                                 <i class="bi bi-house-door fs-5 mb-1 nav-link-icon"></i>
                                 <span class="small">Главная</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-2" href="/Product">
+                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-0 px-2" href="/Product">
                                 <i class="bi bi-grid fs-5 mb-1 nav-link-icon"></i>
                                 <span class="small">Каталог</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-2" href="@Url.Action("Favorites", "Product")" title="Избранное">
+                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-0 px-2" href="@Url.Action("Favorites", "Product")" title="Избранное">
                                 <i class="bi bi-heart fs-5 mb-1 nav-link-icon"></i>
                                 <span class="small">Избранное</span>
                             </a>
                         </li>
-                        <li class="nav-item d-flex align-items-center ms-2">
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-with-icon fw-semibold d-flex flex-column align-items-center py-0 px-2 position-relative" href="@Url.Action("Index", "Cart")" title="Корзина">
+                                <i class="bi bi-cart fs-5 mb-1 nav-link-icon"></i>
+                                <span class="small">Корзина</span>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge" id="cartBadge" style="display: none; font-size: 0.65rem;">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item d-flex align-items-center ms-1">
                             <form class="d-flex navbar-search-form" method="get" action="@Url.Action("Search", "Product")" role="search">
                                 <input class="form-control form-control-sm navbar-search-input" type="search" name="q" placeholder="Найти на AiMarket..." aria-label="Поиск">
                                 <button class="btn btn-outline-primary btn-sm ms-1 navbar-search-btn" type="submit" title="Искать">
@@ -139,6 +146,9 @@
                         <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#supportModal" aria-label="Служба поддержки">
                             <i class="bi bi-headset me-1"></i>Служба поддержки
                         </button>
+                        <a href="@Url.Action("Terms", "Account")" class="btn btn-outline-light btn-sm" aria-label="Пользовательское соглашение">
+                            <i class="bi bi-file-text me-1"></i>Пользовательское соглашение
+                        </a>
                     </div>
                 </div>
                 <div class="col-md-6 text-end">

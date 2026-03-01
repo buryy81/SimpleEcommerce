@@ -26,7 +26,16 @@ public class AdminController : BaseController
 		if (!IsAdmin())
 			return RedirectToAction("Login", "Account");
 
+		// Получаем список заблокированных IP
+		var blockedIps = await _context.BlockedIps.Select(b => b.Ip).ToListAsync();
+
 		IQueryable<User> usersQuery = _context.Users;
+
+		// Исключаем пользователей с заблокированными IP
+		if (blockedIps.Any())
+		{
+			usersQuery = usersQuery.Where(u => u.Ip == null || !blockedIps.Contains(u.Ip));
+		}
 
 		// Поиск по ID, Email, имени или фамилии
 		if (!string.IsNullOrEmpty(search))
@@ -128,13 +137,58 @@ public class AdminController : BaseController
 		return View(user);
 	}
 
-	public async Task<IActionResult> BlockedIps()
+	public async Task<IActionResult> BlockedIps(string search = "")
 	{
 		if (!IsAdmin())
 			return RedirectToAction("Login", "Account");
 
-		var list = await _context.BlockedIps.OrderByDescending(b => b.CreatedAt).ToListAsync();
-		return View(list);
+		var blockedIpsList = await _context.BlockedIps.OrderByDescending(b => b.CreatedAt).ToListAsync();
+		var blockedIps = blockedIpsList.Select(b => b.Ip).ToList();
+
+		// Получаем пользователей с заблокированными IP
+		List<User> blockedUsers = new List<User>();
+		if (blockedIps.Any())
+		{
+			IQueryable<User> usersQuery = _context.Users
+				.Where(u => u.Ip != null && blockedIps.Contains(u.Ip));
+
+			// Поиск по ID, Email, имени или фамилии
+			if (!string.IsNullOrEmpty(search))
+			{
+				if (int.TryParse(search, out int userId))
+				{
+					usersQuery = usersQuery.Where(u => u.Id == userId);
+				}
+				else
+				{
+					usersQuery = usersQuery.Where(u =>
+						u.Email.Contains(search) ||
+						u.FirstName.Contains(search) ||
+						u.LastName.Contains(search));
+				}
+			}
+
+			blockedUsers = await usersQuery
+				.OrderBy(u => u.Id)
+				.ToListAsync();
+
+			// Получаем все активные заявки для отображения по пользователям
+			var allPendingRequests = await _context.PendingRequests
+				.Where(p => !p.IsCompleted)
+				.Include(p => p.User)
+				.ToListAsync();
+
+			// Группируем заявки по пользователям
+			var userRequests = allPendingRequests
+				.GroupBy(p => p.UserId)
+				.ToDictionary(g => g.Key, g => g.ToList());
+
+			ViewBag.UserRequests = userRequests;
+		}
+
+		ViewBag.Search = search;
+		ViewBag.BlockedUsers = blockedUsers;
+		return View(blockedIpsList);
 	}
 
 	[HttpPost]

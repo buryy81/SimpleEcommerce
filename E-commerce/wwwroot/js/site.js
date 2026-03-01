@@ -49,3 +49,81 @@
         }, 600);
     });
 })();
+
+// Функционал корзины
+(function() {
+    // Обновление счетчика корзины в навигации
+    function updateCartBadge() {
+        $.ajax({
+            url: '/Cart/GetCartCount',
+            method: 'GET',
+            success: function(response) {
+                const badge = $('#cartBadge');
+                if (response.count > 0) {
+                    badge.text(response.count).show();
+                } else {
+                    badge.hide();
+                }
+            },
+            error: function() {
+                // Игнорируем ошибки, если пользователь не авторизован
+            }
+        });
+    }
+
+    // Обновляем счетчик при загрузке страницы
+    $(document).ready(function() {
+        updateCartBadge();
+    });
+
+    // Обработка кнопки "Добавить в корзину"
+    $(document).on('click', '.add-to-cart-btn', function(e) {
+        e.preventDefault();
+        const btn = $(this);
+        const productId = btn.data('product-id');
+        const productName = btn.data('product-name');
+        const productPrice = btn.data('product-price');
+
+        if (!productId) {
+            alert('Ошибка: товар не найден');
+            return;
+        }
+
+        // Блокируем кнопку
+        const originalHtml = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Добавление...');
+
+        $.ajax({
+            url: '/Cart/AddToCart',
+            method: 'POST',
+            data: { productId: productId, quantity: 1 },
+            success: function(response) {
+                if (response.success) {
+                    // Показываем уведомление
+                    btn.html('<i class="bi bi-check-circle me-2"></i>Добавлено!');
+                    btn.removeClass('btn-primary').addClass('btn-success');
+                    
+                    // Обновляем счетчик корзины
+                    updateCartBadge();
+                    
+                    // Через 2 секунды возвращаем кнопку в исходное состояние
+                    setTimeout(function() {
+                        btn.prop('disabled', false).html(originalHtml);
+                        btn.removeClass('btn-success').addClass('btn-primary');
+                    }, 2000);
+                } else {
+                    if (response.redirect) {
+                        window.location.href = response.url;
+                    } else {
+                        alert(response.message || 'Ошибка при добавлении товара в корзину');
+                        btn.prop('disabled', false).html(originalHtml);
+                    }
+                }
+            },
+            error: function() {
+                alert('Ошибка при добавлении товара в корзину');
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    });
+})();

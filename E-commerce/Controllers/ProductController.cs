@@ -33,10 +33,10 @@ public class ProductController : BaseController
             new Product
             {
                 Id = 2,
-                Name = "Смартфон Xiaomi Redmi Note 12",
+                Name = "Iphone 12 Pro 256GB",
                 Price = 35900,
                 Description = "Современный смартфон с отличной камерой и быстрой зарядкой. Экран 6.67 дюймов, 128 ГБ памяти.",
-                ImageUrl = "https://newton.by/upload/resize_cache/iblock/879/634_432_16c292005ec91514f5757ea1480bc3f98/2bb0r9m1dq7su2kfo70ca0puhudugpnj.jpg",
+                ImageUrl = "https://pr5.zoon.ru/kSrJ9sLHCh2pjGmied9PDA/600x600%2Cq85/wKns0v8J1fdyyquZYkyrWCCYS3YSAVN2lHgvaSsp8b7E1a91ES3sbPCO0M5ld9Hci0m_ItjpxMN_0SNDMGQyM8a9OY6TMM3zIqmU6zgjvVL4FqduOqRWDgS5XfO4gMHgA5DH1dOg7W1HsMYhJ_E1qQ4lS1OX5krFg5sZbk0UT5Vm6dk7x_eTFkJ5ISfdMSWot0U8Rjjyx_xCSj1jARbnAuiVvOCf4lM3F9aZ2N8be1kcT7JOxwBRFweKXIU-zp59frFccvjjsk1nBq11iokFC2mh1vTW21FgWcs9v2RYXk0rjZ87_YACAQF13m0eaO5E",
                 StoreName = StoreNames[1]
             },
             new Product
@@ -83,7 +83,7 @@ public class ProductController : BaseController
                 Name = "Игровая мышь Razer DeathAdder V3",
                 Price = 8980,
                 Description = "Профессиональная игровая мышь с оптическим сенсором 30K DPI. Эргономичный дизайн для правшей.",
-                ImageUrl = "https://ixbt.online/gametech/sadm_images/2008/001_den/Razer_death/0IMG_8134.jpg",
+                ImageUrl = "https://cache3.youla.io/files/images/780_780/5b/2b/5b2b820a65bcf152ad530693.jpg",
                 StoreName = StoreNames[6]
             },
             new Product
@@ -193,7 +193,7 @@ public class ProductController : BaseController
                 Name = "Блок питания Cooler Master 750W",
                 Price = 8980, 
                 Description = "Мощный блок питания 80 Plus Gold. Модульная конструкция, тихая работа, надежность.", 
-                ImageUrl = "https://static.nix.ru/images/cooler-master-750---v2-4968462254.jpg?good_id=496846&width=draft&height=draft&view_id=2254", 
+                ImageUrl = "https://static.wixstatic.com/media/6efc59_474f3ee5892447f3aab88e87e8eac43c~mv2.jpg/v1/fit/w_500,h_500,q_90/file.jpg", 
                 StoreName = StoreNames[2] 
             },
             new Product
@@ -202,7 +202,7 @@ public class ProductController : BaseController
                 Name = "Видеокарта NVIDIA RTX 4080",
                 Price = 46800, 
                 Description = "Игровая видеокарта с поддержкой DLSS 3.0. 8 ГБ видеопамяти, отличная производительность.", 
-                ImageUrl = "https://cdn.mos.cms.futurecdn.net/ATgKtkKr4PNv6j92UorCu9-650-80.jpg", 
+                ImageUrl = "https://ir.ozone.ru/s3/multimedia-y/c600/6471800014.jpg", 
                 StoreName = StoreNames[3]
             },
             new Product
@@ -220,7 +220,7 @@ public class ProductController : BaseController
                 Name = "Процессор AMD Ryzen 7 5800X", 
                 Price = 32800, 
                 Description = "Мощный процессор для игр и работы. 8 ядер, 16 потоков, базовая частота 3.8 ГГц.", 
-                ImageUrl = "https://newton.by/upload/resize_cache/iblock/133/650_650_16c292005ec91514f5757ea1480bc3f98/13318d059d17199d52fb7328ae4f08cd.jpg",
+                ImageUrl = "https://cdn1.ozone.ru/s3/multimedia-1-x/c600/7416899277.jpg",
                 StoreName = StoreNames[5]
             },
             new Product
@@ -247,7 +247,7 @@ public class ProductController : BaseController
                 Name = "Кулер для процессора Noctua NH-D15", 
                 Price = 6280, 
                 Description = "Мощный башенный кулер для процессора. Тихая работа, отличное охлаждение.", 
-                ImageUrl = "https://www.mypc.by/upload/iblock/08b/x2y8yuv3a1tw2mlig0u81w1dwbwq0f6r.jpeg", 
+                ImageUrl = "https://images-na.ssl-images-amazon.com/images/I/81i9YOlnPEL._AC_UL600_SR600,400_.jpg", 
                 StoreName = StoreNames[0] 
             },
             new Product 
@@ -256,7 +256,7 @@ public class ProductController : BaseController
                 Name = "Микрофон Blue Yeti", 
                 Price = 12990, 
                 Description = "USB микрофон для стриминга и записи. Несколько режимов записи, качественный звук.",
-                ImageUrl = "https://avatars.mds.yandex.net/get-mpic/11740777/2a0000018b010e5b109690c14d0ecf9b3bc0/orig", 
+                ImageUrl = "https://tehnoland.shop/uploads/650b81586cffd.jpg", 
                 StoreName = StoreNames[1]
             },
             new Product
@@ -301,7 +301,7 @@ public class ProductController : BaseController
                 Name = "Веб-камера Logitech",
                 Price = 12990, 
                 Description = "Профессиональная веб-камера для стриминга. Разрешение 1080p 60fps, HDR, кольцевая подсветка.",
-                ImageUrl = "https://unsplash.com/photos/9vP2tWTwsF4/download?force=true&w=640", 
+                ImageUrl = "https://cdn.etm.ru/ipro/2381/small_7000013617_4.jpg", 
                 StoreName = StoreNames[6] 
             },
             new Product
@@ -310,7 +310,7 @@ public class ProductController : BaseController
                 Name = "Игровой стул Secretlab Titan", 
                 Price = 32800,
                 Description = "Эргономичный игровой стул премиум класса. Регулировка высоты и наклона, качественные материалы.",
-                ImageUrl = "https://pic.rutubelist.ru/video/47/6c/476c7f453165fd956929f3d02491c73f.jpg", 
+                ImageUrl = "https://m.media-amazon.com/images/I/31yslTN35qL.jpg", 
                 StoreName = StoreNames[7] 
             },
             new Product 
@@ -328,7 +328,7 @@ public class ProductController : BaseController
                 Name = "Беспроводная зарядка Samsung", 
                 Price = 750, 
                 Description = "Быстрая беспроводная зарядка для смартфонов. Мощность 15W, компактный дизайн.",
-                ImageUrl = "https://c1.neweggimages.com/ProductImage/359-000V-005F6-V07.jpg", 
+                ImageUrl = "https://static.onlinetrade.ru/img/items/m/besprovodnoe_zaryadnoe_ustroystvo_samsung_ep_n5200twrgru_s_funktsiey_bystroy_zaryadki_belyy_ep_n5200twrgru__1519057_1.jpg", 
                 StoreName = StoreNames[1]
             },
             new Product 
@@ -355,7 +355,7 @@ public class ProductController : BaseController
                 Name = "Чехол для iPhone 15 Pro", 
                 Price = 2830,
                 Description = "Защитный чехол с MagSafe. Прозрачный дизайн, защита от ударов, совместимость с беспроводной зарядкой.", 
-                ImageUrl = "https://i-cnt.ru/upload/iblock/1c0/bhgbfpda6gc9pi62frogh3rct9jm8r2g.jpg", 
+                ImageUrl = "https://cdn1.ozone.ru/s3/multimedia-1-s/c600/7184132920.jpg", 
                 StoreName = StoreNames[4] 
             },
             new Product 
@@ -373,7 +373,7 @@ public class ProductController : BaseController
                 Name = "Автомобильный держатель для телефона", 
                 Price = 750,
                 Description = "Магнитный держатель для автомобиля. Универсальный крепеж, надежная фиксация.", 
-                ImageUrl = "https://baseus-shop.by/files/uploads/products/SUYL-F0G.jpg",
+                ImageUrl = "https://avatars.mds.yandex.net/get-mpic/12260097/2a0000019395db696417ff0bc7bb843ea9ff/orig",
                 StoreName = StoreNames[6]
             },
             new Product 

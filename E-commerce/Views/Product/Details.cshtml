@@ -65,7 +65,7 @@
                             <i class="bi bi-check-circle-fill"></i> В наличии
                         </span>
                         <span class="text-success small">
-                            <i class="bi bi-truck"></i> Доставка завтра
+                            <i class="bi bi-truck"></i> Удобная доставка
                         </span>
                     </div>
                 </div>
@@ -80,17 +80,11 @@
                         bool hasEnoughBalance = ViewBag.HasEnoughBalance ?? false;
                     }
                     
-                    @if (hasEnoughBalance)
+                    <button class="btn btn-primary btn-lg w-100 mb-3 fw-semibold add-to-cart-btn" style="height: 55px;" data-product-id="@Model.Id" data-product-name="@Model.Name" data-product-price="@Model.Price">
+                        <i class="bi bi-cart-plus me-2"></i>Добавить в корзину
+                    </button>
+                    @if (!hasEnoughBalance)
                     {
-                        <button class="btn btn-primary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" id="buyBtn" data-product-id="@Model.Id" data-product-price="@Model.Price" data-product-name="@Model.Name" data-store-name="@(Model.StoreName ?? "Магазин")">
-                            <i class="bi bi-cart-plus me-2"></i>Купить
-                        </button>
-                    }
-                    else
-                    {
-                        <button class="btn btn-secondary btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" disabled>
-                            <i class="bi bi-cart-x me-2"></i>Недостаточно средств
-                        </button>
                         <button class="btn btn-success btn-lg w-100 mb-3 fw-semibold" style="height: 55px;" data-bs-toggle="modal" data-bs-target="#paymentModal">
                             <i class="bi bi-wallet2 me-2"></i>Пополнить баланс
                         </button>
