@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimpleEcommerce.Data;
 using SimpleEcommerce.Models;
+using SimpleEcommerce.Services;
+using System;
 
 namespace SimpleEcommerce.Controllers;
 
@@ -10,10 +12,12 @@ public class ProductController : BaseController
 	private static readonly string[] StoreNames = { "TechStore", "Электроника Плюс", "Digital World", "TechMarket", "Гаджеты Онлайн", "SmartShop", "TechZone", "ЭлектронМаркет" };
 
 	private readonly ApplicationDbContext _context;
+    private readonly SeoService _seo;
 
-	public ProductController(ApplicationDbContext context)
+    public ProductController(ApplicationDbContext context, SeoService seo)
 	{
 		_context = context;
+        _seo = seo;
 	}
 
 	private static List<Product> GetAllProducts()
@@ -492,7 +496,17 @@ public class ProductController : BaseController
 		var products = GetAllProducts();
 		var product = products.FirstOrDefault(p => p.Id == id);
 
-		if (product == null)
+        var url = $"{Request.Scheme}://{Request.Host}/product/{id}";
+
+        _seo.SetMeta(
+            product.Name,
+            product.Description,
+            product.ImageUrl,
+            url,
+            "product"
+        );
+
+        if (product == null)
 		{
 			product = new Product
 			{
